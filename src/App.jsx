@@ -1,4 +1,4 @@
-// App.jsx (単一ファイル統合版 - catchブロック構文エラー修正済み)
+// App.jsx (単一ファイル統合版 - 新しいアプローチで余白を調整)
 
 import html2canvas from "html2canvas";
 import React, { useState, useMemo } from "react";
@@ -119,7 +119,7 @@ const initialSettings = {
   textColor: DEFAULT_TEXT_COLOR,
   frameColor: DEFAULT_FRAME_COLOR,
   framePadding: 40,
-  framePaddingBottom: 15,
+  framePaddingBottom: 15, // ⭐️ 初期値を15pxに設定
   frameRadius: 8,
   imageRadius: 0,
 };
@@ -197,7 +197,7 @@ export default function App() {
   const handleChangeSetting = (key, value) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
-  
+
   const line2Parts = useMemo(() => {
     const { lens, focalLength, aperture, exposure, iso } = cameraInfo;
     return [lens, focalLength, aperture, exposure, iso].filter(Boolean);
@@ -215,45 +215,69 @@ export default function App() {
       const exifData = await exifr.parse(file);
       const parsedInfo = parseExifData(exifData);
       setCameraInfo(parsedInfo);
-      
-    } catch (error) { // ⭐️ 修正: { を追加
+
+    } catch (error) {
       console.error("EXIFデータ取得エラー:", error);
       setCameraInfo(initialCameraInfo);
       setSettings((prev) => ({ ...prev, textColor: DEFAULT_TEXT_COLOR }));
       alert("EXIFデータが見つからないか、読み取れませんでした。手動で情報を入力してください。");
-    } // ⭐️ 修正: } を追加
+    }
   };
 
   const handleDownload = async (format = "png") => {
     const frameElement = document.getElementById("capture-area");
     if (!frameElement) return;
 
+    // ⭐️ 端末環境に応じてスケールを補正
+    const deviceScale = window.devicePixelRatio > 1 ? 2 / window.devicePixelRatio : 2;
+
+    // ⭐️ iPhone/Androidで余白が広がる問題を補正
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const adjustedBottomPadding = isMobile
+      ? Math.max(0, settings.framePaddingBottom - 10) // モバイル時に10px引く
+      : settings.framePaddingBottom;
+
+    const rect = frameElement.getBoundingClientRect();
     const originalMaxWidth = frameElement.style.maxWidth;
     frameElement.style.maxWidth = "none";
-    
+
+    // DOM反映を待つ
     await new Promise((r) => setTimeout(r, 100));
 
     const canvas = await html2canvas(frameElement, {
       useCORS: true,
       backgroundColor: settings.frameColor,
-      scale: 3,
-      scrollX: 0,
-      scrollY: 0,
+      scale: deviceScale, // ⭐️ DPI補正済みスケール
+      x: Math.round(rect.left + window.scrollX),
+      y: Math.round(rect.top + window.scrollY),
+      width: Math.round(rect.width),
+      height: Math.round(rect.height),
+      scrollX: -window.scrollX,
+      scrollY: -window.scrollY,
     });
-    
+
     frameElement.style.maxWidth = originalMaxWidth;
+
+    // ⭐️ 下余白の補正：canvas切り取りで再調整
+    const finalCanvas = document.createElement("canvas");
+    const ctx = finalCanvas.getContext("2d");
+    const trim = isMobile ? 10 : 0; // モバイルは下を少し切る
+
+    finalCanvas.width = canvas.width;
+    finalCanvas.height = canvas.height - trim;
+    ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height - trim, 0, 0, canvas.width, canvas.height - trim);
 
     const link = document.createElement("a");
     link.download = `shoton-frame.${format}`;
     link.href =
       format === "png"
-        ? canvas.toDataURL("image/png")
-        : canvas.toDataURL("image/jpeg", 0.95);
+        ? finalCanvas.toDataURL("image/png")
+        : finalCanvas.toDataURL("image/jpeg", 0.95);
     link.click();
   };
 
   const cameraInfoFields = ["make", "model", "lens", "aperture", "exposure", "iso", "focalLength"];
-  
+
   // =========================================================
   // 5. JSXレンダリング
   // =========================================================
@@ -266,22 +290,24 @@ export default function App() {
 
         {imageSrc && (
           <div style={{ display: "flex", justifyContent: "center", marginTop: "40px" }}>
-            {/* CameraFrame 部分 */}
+            {/* ⭐️ CameraFrame 全体を制御する部分 */}
             <div
               id="capture-area"
               style={{
                 background: settings.frameColor,
-                paddingTop: `${settings.framePadding}px`,
-                paddingLeft: `${settings.framePadding}px`,
-                paddingRight: `${settings.framePadding}px`,
-                paddingBottom: `${settings.framePaddingBottom}px`, 
+                padding: `${settings.framePadding}px`, // 上下左右をまとめて設定
+                paddingBottom: `${settings.framePaddingBottom}px`, // 下だけ個別に調整
                 borderRadius: `${settings.frameRadius}px`,
                 textAlign: "center",
                 maxWidth: "800px",
                 margin: "0 auto",
                 boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                display: "flex", // flexboxで内部要素を配置
+                flexDirection: "column", // 縦方向に並べる
+                alignItems: "center", // 中央寄せ
               }}
             >
+              {/* 画像部分 */}
               <img
                 src={imageSrc}
                 alt="preview"
@@ -289,7 +315,7 @@ export default function App() {
                   width: "100%",
                   borderRadius: `${settings.imageRadius}px`,
                   display: "block",
-                  marginBottom: "15px", 
+                  marginBottom: "15px", // ⭐️ 画像と文字情報の間の余白
                 }}
               />
 
@@ -298,10 +324,8 @@ export default function App() {
                 style={{
                   color: settings.textColor,
                   fontFamily: settings.fontFamily,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
                   lineHeight: "1.6",
+                  // ⭐️ ここに余計なパディングやマージンは設定しない
                 }}
               >
                 {/* ---- 1行目 (ロゴを横に配置するレイアウト) ---- */}
@@ -319,16 +343,16 @@ export default function App() {
                   <p style={{ margin: 0 }} translate="no">
                     Shot on&nbsp;
                     <strong style={{ color: getBrandColor(cameraInfo.make) }}>
-                        {cameraInfo.model || "Model"}
+                      {cameraInfo.model || "Model"}
                     </strong>
                   </p>
-                  
+
                   {settings.showLogo && cameraInfo.make && getLogo(cameraInfo.make) && (
                     <img
                       src={getLogo(cameraInfo.make)}
                       alt="brand logo"
                       style={{
-                        height: `${settings.fontSizeLine1 * 1.8}px`, 
+                        height: `${settings.fontSizeLine1 * 1.8}px`,
                         objectFit: "contain",
                         opacity: 0.9,
                         mixBlendMode: getBlendMode(settings.frameColor),
@@ -341,7 +365,7 @@ export default function App() {
                 {/* ---- 2行目 (露出情報) ---- */}
                 <p
                   style={{
-                    margin: "6px 0 0 0",
+                    margin: "6px 0 0 0", // ⭐️ ロゴと2行目の間の余白
                     fontSize: `${settings.fontSizeLine2}px`,
                     fontWeight: "400",
                   }}
