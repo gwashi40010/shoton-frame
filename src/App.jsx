@@ -1,7 +1,7 @@
-// App.jsx (単一ファイル統合版 - ブランドカラーマップ修正済み)
+// App.jsx (単一ファイル統合版 - ロゴ横配置 + レスポンシブ対応)
 
 import html2canvas from "html2canvas";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react"; // useEffect を維持
 import * as exifr from "exifr";
 
 // =========================================================
@@ -35,18 +35,17 @@ const LOGO_MAP = {
   sigma: "/logos/sigma.png",
 };
 
-// ⭐️ 修正: BRAND_COLORS_MAP に PENTAX や他のメーカーを追加
 const BRAND_COLORS_MAP = {
   sony: "#f36f21",
   canon: "#c00000",
   nikon: "#ffd400",
   fujifilm: "#006241",
   panasonic: "#0072bc",
-  pentax: "#DA291C", // PENTAX (赤)
-  olympus: "#00529C", // OLYMPUS (青)
-  leica: "#E20613", // Leica (赤)
-  sigma: "#000000", // SIGMA (黒)
-  apple: "#808080", // Apple (グレー)
+  pentax: "#DA291C",
+  olympus: "#00529C",
+  leica: "#E20613",
+  sigma: "#000000",
+  apple: "#808080",
 };
 
 const DEFAULT_TEXT_COLOR = "#000000";
@@ -120,7 +119,7 @@ const initialSettings = {
   textColor: DEFAULT_TEXT_COLOR,
   frameColor: DEFAULT_FRAME_COLOR,
   framePadding: 40,
-  framePaddingBottom: 50, 
+  framePaddingBottom: 20, // PCでのデフォルト値
   frameRadius: 8,
   imageRadius: 0,
 };
@@ -190,6 +189,22 @@ export default function App() {
   const [imageSrc, setImageSrc] = useState(null);
   const [cameraInfo, setCameraInfo] = useState(initialCameraInfo);
   const [settings, setSettings] = useState(initialSettings);
+
+  // ⭐️ ウィンドウ幅を監視して、下のパディングを動的に調整するロジック
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 768) {
+        setSettings(prev => ({ ...prev, framePaddingBottom: 15 })); // スマホ用の値
+      } else {
+        setSettings(prev => ({ ...prev, framePaddingBottom: 20 })); // PC用の値
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []); // 空の依存配列でマウント時とアンマウント時にのみ実行
 
   const handleChangeCameraInfo = (e) => {
     setCameraInfo({ ...cameraInfo, [e.target.name]: e.target.value });
@@ -275,7 +290,7 @@ export default function App() {
                 paddingTop: `${settings.framePadding}px`,
                 paddingLeft: `${settings.framePadding}px`,
                 paddingRight: `${settings.framePadding}px`,
-                paddingBottom: `${settings.framePaddingBottom}px`, 
+                paddingBottom: `${settings.framePaddingBottom}px`, // ⭐️ 動的に設定された値を使用
                 borderRadius: `${settings.frameRadius}px`,
                 textAlign: "center",
                 maxWidth: "800px",
@@ -294,7 +309,7 @@ export default function App() {
                 }}
               />
 
-              {/* 撮影情報 */}
+              {/* 撮影情報コンテナ */}
               <div
                 style={{
                   color: settings.textColor,
@@ -305,7 +320,7 @@ export default function App() {
                   lineHeight: "1.6",
                 }}
               >
-                {/* ---- 1行目 ---- */}
+                {/* ⭐️ 修正: ---- 1行目 (ロゴを横に配置するレイアウト) ---- */}
                 <div
                   style={{
                     display: "flex",
@@ -323,6 +338,8 @@ export default function App() {
                         {cameraInfo.model || "Model"}
                     </strong>
                   </p>
+
+                  {/* ロゴを1行目のPタグの横に戻す */}
                   {settings.showLogo && cameraInfo.make && getLogo(cameraInfo.make) && (
                     <img
                       src={getLogo(cameraInfo.make)}
@@ -338,16 +355,17 @@ export default function App() {
                   )}
                 </div>
 
-                {/* ---- 2行目 ---- */}
+                {/* ---- 2行目 (露出情報) ---- */}
                 <p
                   style={{
-                    margin: "6px 0 0 0",
+                    margin: "6px 0 0 0", // ⭐️ 修正: マージンを元に戻す
                     fontSize: `${settings.fontSizeLine2}px`,
                     fontWeight: "400",
                   }}
                 >
                   {line2Parts.join(" · ")}
                 </p>
+
               </div>
             </div>
           </div>
@@ -394,12 +412,12 @@ export default function App() {
                 { label: "🔠 1行目サイズ", key: "fontSizeLine1", unit: "px", type: "number" },
                 { label: "🔠 2行目サイズ", key: "fontSizeLine2", unit: "px", type: "number" },
                 { label: "📏 フレーム余白 (上/横)", key: "framePadding", unit: "px", type: "number" },
-                { label: "📏 下の余白 (文字下)", key: "framePaddingBottom", unit: "px", type: "number" }, 
+                { label: "📏 下の余白", key: "framePaddingBottom", unit: "px", type: "number", readOnly: true }, // readOnly を維持
                 { label: "🎯 フレーム丸み", key: "frameRadius", unit: "px", type: "number" },
                 { label: "🖼 写真の丸み", key: "imageRadius", unit: "px", type: "number" },
                 { label: "🖍 テキストカラー", key: "textColor", type: "color" },
                 { label: "⬜ フレームカラー", key: "frameColor", type: "color" },
-              ].map(({ label, key, unit, type }) => (
+              ].map(({ label, key, unit, type, readOnly }) => (
                 <label key={key}>
                   {label}
                   <input
@@ -407,6 +425,7 @@ export default function App() {
                     value={settings[key]}
                     onChange={(e) => handleChangeSetting(key, type === "number" ? Number(e.target.value) : e.target.value)}
                     style={{ ...styles.numberInput, width: type === "color" ? "40px" : "70px" }}
+                    readOnly={readOnly} // readOnly を適用
                   />
                   {unit}
                 </label>
