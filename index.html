@@ -1,17 +1,37 @@
 <!doctype html>
 <html lang="en" translate="no">
 <head>
-    <link
-  href="https://fonts.googleapis.com/css2?family=Roboto&family=Noto+Sans+JP&family=Playfair+Display&display=swap"
-  rel="stylesheet"
-/>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>shoton-frame</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Noto+Sans+JP&family=Playfair+Display&display=swap"
+    rel="stylesheet" />
+  <meta name="google" content="notranslate">
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>shoton-frame</title>
+
+  <style>
+      /* ✅ root全体を中央配置 */
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #eaeaea;
+      }
+
+      #root {
+        width: 100%;
+        max-width: 1000px;
+      }
+    </style>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
 </html>
