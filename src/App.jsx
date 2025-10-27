@@ -33,6 +33,8 @@ const LOGO_MAP = {
   kodak: "/logos/kodak.png",
   leica: "/logos/leica.png",
   sigma: "/logos/sigma.png",
+  insta360: "/logos/insta360.png",
+
 };
 
 const BRAND_COLORS_MAP = {
