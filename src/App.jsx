@@ -334,7 +334,7 @@ export default function App() {
 
                 <p
                   style={{
-                    margin: "2px 0 0 0", // ⭐️ 修正: margin-topを2pxに変更
+                    margin: "0px 0 0 0", // ⭐️ 修正: margin-topを2pxに変更
                     fontSize: `${settings.fontSizeLine2}px`,
                     fontWeight: "400",
                   }}
