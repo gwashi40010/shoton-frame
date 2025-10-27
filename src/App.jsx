@@ -341,7 +341,7 @@ export default function App() {
                 {/* ---- 2行目 ---- */}
                 <p
                   style={{
-                    margin: "6px 0 0 0",
+                    margin: "3px 0 0 0",
                     fontSize: `${settings.fontSizeLine2}px`,
                     fontWeight: "400",
                   }}
