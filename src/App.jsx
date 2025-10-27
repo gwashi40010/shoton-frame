@@ -33,7 +33,7 @@ const LOGO_MAP = {
   kodak: "/logos/kodak.png",
   leica: "/logos/leica.png",
   sigma: "/logos/sigma.png",
-  insta360: "/logos/insta360.png",
+  IAC3: "/logos/insta360.png",
 
 };
 
