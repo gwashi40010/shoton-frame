@@ -1,4 +1,4 @@
-// App.jsx (単一ファイル統合版 - テキストエリアの高さを固定)
+// App.jsx (単一ファイル統合版 - 下部バーの高さ固定アプローチ)
 
 import html2canvas from "html2canvas";
 import React, { useState, useMemo } from "react";
@@ -83,17 +83,12 @@ const parseExifData = (exifData) => {
   const make = exifData?.Make || "";
   const model = exifData?.Model || "";
   const lens = exifData?.LensModel || "";
-
   const exposure = exifData?.ExposureTime
     ? `1/${Math.round(1 / exifData.ExposureTime)}s`
     : "";
-
   const aperture = exifData?.FNumber ? `f/${exifData.FNumber.toFixed(1)}` : "";
-
   const iso = exifData?.ISO ? `ISO${exifData.ISO}` : "";
-
   const focalLength = exifData?.FocalLength ? `${exifData.FocalLength}mm` : "";
-
   return { make, model, lens, exposure, aperture, iso, focalLength };
 };
 
@@ -118,10 +113,8 @@ const initialSettings = {
   fontSizeLine2: 14,
   textColor: DEFAULT_TEXT_COLOR,
   frameColor: DEFAULT_FRAME_COLOR,
-  framePadding: 40, // 上・左右の余白
-  framePaddingBottom: 20, // ⭐️ テキストエリアの下の余白
-  imageBottomMargin: 20, // ⭐️ 画像とテキストエリアの間の余白
-  textContainerHeight: 80, // ⭐️ テキストエリア自体の高さを固定
+  framePadding: 40, // ⭐️ 上・左・右の余白
+  bottomBarHeight: 80, // ⭐️ 新設定: 下部バーの「高さ」を固定
   frameRadius: 8,
   imageRadius: 0,
 };
@@ -241,6 +234,8 @@ export default function App() {
       scale: 3,
       scrollX: 0,
       scrollY: 0,
+      width: frameElement.offsetWidth,
+      height: frameElement.offsetHeight,
     });
     
     frameElement.style.maxWidth = originalMaxWidth;
@@ -268,15 +263,16 @@ export default function App() {
 
         {imageSrc && (
           <div style={{ display: "flex", justifyContent: "center", marginTop: "40px" }}>
-            {/* CameraFrame 部分 */}
+            {/* ⭐️ CameraFrame 全体を制御する部分 */}
             <div
               id="capture-area"
               style={{
                 background: settings.frameColor,
+                // ⭐️ 修正: 上・左・右のパディングのみ設定
                 paddingTop: `${settings.framePadding}px`,
                 paddingLeft: `${settings.framePadding}px`,
                 paddingRight: `${settings.framePadding}px`,
-                paddingBottom: `${settings.framePaddingBottom}px`, // ⭐️ 固定 (20px)
+                // ⭐️ 修正: paddingBottom は削除
                 borderRadius: `${settings.frameRadius}px`,
                 textAlign: "center",
                 maxWidth: "800px",
@@ -284,6 +280,7 @@ export default function App() {
                 boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
               }}
             >
+              {/* 画像部分 */}
               <img
                 src={imageSrc}
                 alt="preview"
@@ -291,24 +288,23 @@ export default function App() {
                   width: "100%",
                   borderRadius: `${settings.imageRadius}px`,
                   display: "block",
-                  marginBottom: `${settings.imageBottomMargin}px`, // ⭐️ 固定 (20px)
                 }}
               />
 
-              {/* ⭐️ 撮影情報コンテナ (高さを固定) */}
+              {/* ⭐️ 撮影情報コンテナ (レイアウトを大きく変更) */}
               <div
                 style={{
                   color: settings.textColor,
                   fontFamily: settings.fontFamily,
+                  lineHeight: "1.6",
+                  height: `${settings.bottomBarHeight}px`, // ⭐️ 高さを固定
                   display: "flex",
                   flexDirection: "column",
-                  justifyContent: "center", // ⭐️ 上下中央揃え
-                  alignItems: "center", // ⭐️ 左右中央揃え
-                  lineHeight: "1.6",
-                  height: `${settings.textContainerHeight}px`, // ⭐️ 高さを固定 (80px)
+                  alignItems: "center",
+                  justifyContent: "center", // ⭐️ テキストを上下中央に配置
                 }}
               >
-                {/* ---- 1行目 (ロゴを横に配置するレイアウト) ---- */}
+                {/* ---- 1行目 ---- */}
                 <div
                   style={{
                     display: "flex",
@@ -342,7 +338,7 @@ export default function App() {
                   )}
                 </div>
 
-                {/* ---- 2行目 (露出情報) ---- */}
+                {/* ---- 2行目 ---- */}
                 <p
                   style={{
                     margin: "6px 0 0 0",
@@ -352,7 +348,6 @@ export default function App() {
                 >
                   {line2Parts.join(" · ")}
                 </p>
-
               </div>
             </div>
           </div>
@@ -396,13 +391,10 @@ export default function App() {
             <h4 style={{ marginBottom: "8px" }}>🎨 デザイン設定</h4>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px 20px" }}>
               {[
-                // ⭐️ UIに2つの設定を追加
                 { label: "🔠 1行目サイズ", key: "fontSizeLine1", unit: "px", type: "number" },
                 { label: "🔠 2行目サイズ", key: "fontSizeLine2", unit: "px", type: "number" },
                 { label: "📏 フレーム余白 (上/横)", key: "framePadding", unit: "px", type: "number" },
-                { label: "📏 下の余白", key: "framePaddingBottom", unit: "px", type: "number" },
-                { label: "📏 画像と文字の余白", key: "imageBottomMargin", unit: "px", type: "number" },
-                { label: "📏 テキストエリア高さ", key: "textContainerHeight", unit: "px", type: "number" },
+                { label: "📏 下部バー高さ", key: "bottomBarHeight", unit: "px", type: "number" }, // ⭐️ 修正
                 { label: "🎯 フレーム丸み", key: "frameRadius", unit: "px", type: "number" },
                 { label: "🖼 写真の丸み", key: "imageRadius", unit: "px", type: "number" },
                 { label: "🖍 テキストカラー", key: "textColor", type: "color" },
