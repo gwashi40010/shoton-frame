@@ -1,4 +1,4 @@
-// App.jsx (単一ファイル統合版 - 下部バーの高さ固定アプローチ)
+// App.jsx (単一ファイル統合版 - 行間調整)
 
 import html2canvas from "html2canvas";
 import React, { useState, useMemo } from "react";
@@ -113,8 +113,8 @@ const initialSettings = {
   fontSizeLine2: 14,
   textColor: DEFAULT_TEXT_COLOR,
   frameColor: DEFAULT_FRAME_COLOR,
-  framePadding: 40, // ⭐️ 上・左・右の余白
-  bottomBarHeight: 80, // ⭐️ 新設定: 下部バーの「高さ」を固定
+  framePadding: 40,
+  bottomBarHeight: 80,
   frameRadius: 8,
   imageRadius: 0,
 };
@@ -263,16 +263,13 @@ export default function App() {
 
         {imageSrc && (
           <div style={{ display: "flex", justifyContent: "center", marginTop: "40px" }}>
-            {/* ⭐️ CameraFrame 全体を制御する部分 */}
             <div
               id="capture-area"
               style={{
                 background: settings.frameColor,
-                // ⭐️ 修正: 上・左・右のパディングのみ設定
                 paddingTop: `${settings.framePadding}px`,
                 paddingLeft: `${settings.framePadding}px`,
                 paddingRight: `${settings.framePadding}px`,
-                // ⭐️ 修正: paddingBottom は削除
                 borderRadius: `${settings.frameRadius}px`,
                 textAlign: "center",
                 maxWidth: "800px",
@@ -280,7 +277,6 @@ export default function App() {
                 boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
               }}
             >
-              {/* 画像部分 */}
               <img
                 src={imageSrc}
                 alt="preview"
@@ -291,20 +287,18 @@ export default function App() {
                 }}
               />
 
-              {/* ⭐️ 撮影情報コンテナ (レイアウトを大きく変更) */}
               <div
                 style={{
                   color: settings.textColor,
                   fontFamily: settings.fontFamily,
                   lineHeight: "1.6",
-                  height: `${settings.bottomBarHeight}px`, // ⭐️ 高さを固定
+                  height: `${settings.bottomBarHeight}px`,
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
-                  justifyContent: "center", // ⭐️ テキストを上下中央に配置
+                  justifyContent: "center",
                 }}
               >
-                {/* ---- 1行目 ---- */}
                 <div
                   style={{
                     display: "flex",
@@ -338,10 +332,9 @@ export default function App() {
                   )}
                 </div>
 
-                {/* ---- 2行目 ---- */}
                 <p
                   style={{
-                    margin: "3px 0 0 0",
+                    margin: "2px 0 0 0", // ⭐️ 修正: margin-topを2pxに変更
                     fontSize: `${settings.fontSizeLine2}px`,
                     fontWeight: "400",
                   }}
@@ -394,7 +387,7 @@ export default function App() {
                 { label: "🔠 1行目サイズ", key: "fontSizeLine1", unit: "px", type: "number" },
                 { label: "🔠 2行目サイズ", key: "fontSizeLine2", unit: "px", type: "number" },
                 { label: "📏 フレーム余白 (上/横)", key: "framePadding", unit: "px", type: "number" },
-                { label: "📏 下部バー高さ", key: "bottomBarHeight", unit: "px", type: "number" }, // ⭐️ 修正
+                { label: "📏 下部バー高さ", key: "bottomBarHeight", unit: "px", type: "number" },
                 { label: "🎯 フレーム丸み", key: "frameRadius", unit: "px", type: "number" },
                 { label: "🖼 写真の丸み", key: "imageRadius", unit: "px", type: "number" },
                 { label: "🖍 テキストカラー", key: "textColor", type: "color" },
