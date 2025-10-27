@@ -197,7 +197,7 @@ export default function App() {
   const handleChangeSetting = (key, value) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
-
+  
   const line2Parts = useMemo(() => {
     const { lens, focalLength, aperture, exposure, iso } = cameraInfo;
     return [lens, focalLength, aperture, exposure, iso].filter(Boolean);
@@ -215,7 +215,7 @@ export default function App() {
       const exifData = await exifr.parse(file);
       const parsedInfo = parseExifData(exifData);
       setCameraInfo(parsedInfo);
-
+      
     } catch (error) {
       console.error("EXIFデータ取得エラー:", error);
       setCameraInfo(initialCameraInfo);
@@ -228,56 +228,36 @@ export default function App() {
     const frameElement = document.getElementById("capture-area");
     if (!frameElement) return;
 
-    // ⭐️ 端末環境に応じてスケールを補正
-    const deviceScale = window.devicePixelRatio > 1 ? 2 / window.devicePixelRatio : 2;
-
-    // ⭐️ iPhone/Androidで余白が広がる問題を補正
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    const adjustedBottomPadding = isMobile
-      ? Math.max(0, settings.framePaddingBottom - 10) // モバイル時に10px引く
-      : settings.framePaddingBottom;
-
-    const rect = frameElement.getBoundingClientRect();
+    // html2canvas のバグ対策: maxWidth を一時的に解除
     const originalMaxWidth = frameElement.style.maxWidth;
     frameElement.style.maxWidth = "none";
-
-    // DOM反映を待つ
+    
+    // DOM更新を待つ
     await new Promise((r) => setTimeout(r, 100));
 
     const canvas = await html2canvas(frameElement, {
       useCORS: true,
-      backgroundColor: settings.frameColor,
-      scale: deviceScale, // ⭐️ DPI補正済みスケール
-      x: Math.round(rect.left + window.scrollX),
-      y: Math.round(rect.top + window.scrollY),
-      width: Math.round(rect.width),
-      height: Math.round(rect.height),
-      scrollX: -window.scrollX,
-      scrollY: -window.scrollY,
+      backgroundColor: settings.frameColor, // フレームの色を背景色に
+      scale: 3, // 高解像度でキャプチャ
+      scrollX: 0,
+      scrollY: 0,
+      width: frameElement.offsetWidth, // 明示的に幅を設定
+      height: frameElement.offsetHeight, // 明示的に高さを設定
     });
-
+    
     frameElement.style.maxWidth = originalMaxWidth;
-
-    // ⭐️ 下余白の補正：canvas切り取りで再調整
-    const finalCanvas = document.createElement("canvas");
-    const ctx = finalCanvas.getContext("2d");
-    const trim = isMobile ? 10 : 0; // モバイルは下を少し切る
-
-    finalCanvas.width = canvas.width;
-    finalCanvas.height = canvas.height - trim;
-    ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height - trim, 0, 0, canvas.width, canvas.height - trim);
 
     const link = document.createElement("a");
     link.download = `shoton-frame.${format}`;
     link.href =
       format === "png"
-        ? finalCanvas.toDataURL("image/png")
-        : finalCanvas.toDataURL("image/jpeg", 0.95);
+        ? canvas.toDataURL("image/png")
+        : canvas.toDataURL("image/jpeg", 0.95);
     link.click();
   };
 
   const cameraInfoFields = ["make", "model", "lens", "aperture", "exposure", "iso", "focalLength"];
-
+  
   // =========================================================
   // 5. JSXレンダリング
   // =========================================================
@@ -343,16 +323,16 @@ export default function App() {
                   <p style={{ margin: 0 }} translate="no">
                     Shot on&nbsp;
                     <strong style={{ color: getBrandColor(cameraInfo.make) }}>
-                      {cameraInfo.model || "Model"}
+                        {cameraInfo.model || "Model"}
                     </strong>
                   </p>
-
+                  
                   {settings.showLogo && cameraInfo.make && getLogo(cameraInfo.make) && (
                     <img
                       src={getLogo(cameraInfo.make)}
                       alt="brand logo"
                       style={{
-                        height: `${settings.fontSizeLine1 * 1.8}px`,
+                        height: `${settings.fontSizeLine1 * 1.8}px`, 
                         objectFit: "contain",
                         opacity: 0.9,
                         mixBlendMode: getBlendMode(settings.frameColor),
