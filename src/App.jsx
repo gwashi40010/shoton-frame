@@ -1,4 +1,4 @@
-// App.jsx (単一ファイル統合版 - 新しいアプローチで余白を調整)
+// App.jsx (単一ファイル統合版 - テキストエリアの高さを固定)
 
 import html2canvas from "html2canvas";
 import React, { useState, useMemo } from "react";
@@ -118,8 +118,10 @@ const initialSettings = {
   fontSizeLine2: 14,
   textColor: DEFAULT_TEXT_COLOR,
   frameColor: DEFAULT_FRAME_COLOR,
-  framePadding: 40,
-  framePaddingBottom: 15, // ⭐️ 初期値を15pxに設定
+  framePadding: 40, // 上・左右の余白
+  framePaddingBottom: 20, // ⭐️ テキストエリアの下の余白
+  imageBottomMargin: 20, // ⭐️ 画像とテキストエリアの間の余白
+  textContainerHeight: 80, // ⭐️ テキストエリア自体の高さを固定
   frameRadius: 8,
   imageRadius: 0,
 };
@@ -228,21 +230,17 @@ export default function App() {
     const frameElement = document.getElementById("capture-area");
     if (!frameElement) return;
 
-    // html2canvas のバグ対策: maxWidth を一時的に解除
     const originalMaxWidth = frameElement.style.maxWidth;
     frameElement.style.maxWidth = "none";
     
-    // DOM更新を待つ
     await new Promise((r) => setTimeout(r, 100));
 
     const canvas = await html2canvas(frameElement, {
       useCORS: true,
-      backgroundColor: settings.frameColor, // フレームの色を背景色に
-      scale: 3, // 高解像度でキャプチャ
+      backgroundColor: settings.frameColor,
+      scale: 3,
       scrollX: 0,
       scrollY: 0,
-      width: frameElement.offsetWidth, // 明示的に幅を設定
-      height: frameElement.offsetHeight, // 明示的に高さを設定
     });
     
     frameElement.style.maxWidth = originalMaxWidth;
@@ -270,24 +268,22 @@ export default function App() {
 
         {imageSrc && (
           <div style={{ display: "flex", justifyContent: "center", marginTop: "40px" }}>
-            {/* ⭐️ CameraFrame 全体を制御する部分 */}
+            {/* CameraFrame 部分 */}
             <div
               id="capture-area"
               style={{
                 background: settings.frameColor,
-                padding: `${settings.framePadding}px`, // 上下左右をまとめて設定
-                paddingBottom: `${settings.framePaddingBottom}px`, // 下だけ個別に調整
+                paddingTop: `${settings.framePadding}px`,
+                paddingLeft: `${settings.framePadding}px`,
+                paddingRight: `${settings.framePadding}px`,
+                paddingBottom: `${settings.framePaddingBottom}px`, // ⭐️ 固定 (20px)
                 borderRadius: `${settings.frameRadius}px`,
                 textAlign: "center",
                 maxWidth: "800px",
                 margin: "0 auto",
                 boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                display: "flex", // flexboxで内部要素を配置
-                flexDirection: "column", // 縦方向に並べる
-                alignItems: "center", // 中央寄せ
               }}
             >
-              {/* 画像部分 */}
               <img
                 src={imageSrc}
                 alt="preview"
@@ -295,17 +291,21 @@ export default function App() {
                   width: "100%",
                   borderRadius: `${settings.imageRadius}px`,
                   display: "block",
-                  marginBottom: "15px", // ⭐️ 画像と文字情報の間の余白
+                  marginBottom: `${settings.imageBottomMargin}px`, // ⭐️ 固定 (20px)
                 }}
               />
 
-              {/* 撮影情報コンテナ */}
+              {/* ⭐️ 撮影情報コンテナ (高さを固定) */}
               <div
                 style={{
                   color: settings.textColor,
                   fontFamily: settings.fontFamily,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center", // ⭐️ 上下中央揃え
+                  alignItems: "center", // ⭐️ 左右中央揃え
                   lineHeight: "1.6",
-                  // ⭐️ ここに余計なパディングやマージンは設定しない
+                  height: `${settings.textContainerHeight}px`, // ⭐️ 高さを固定 (80px)
                 }}
               >
                 {/* ---- 1行目 (ロゴを横に配置するレイアウト) ---- */}
@@ -345,7 +345,7 @@ export default function App() {
                 {/* ---- 2行目 (露出情報) ---- */}
                 <p
                   style={{
-                    margin: "6px 0 0 0", // ⭐️ ロゴと2行目の間の余白
+                    margin: "6px 0 0 0",
                     fontSize: `${settings.fontSizeLine2}px`,
                     fontWeight: "400",
                   }}
@@ -396,10 +396,13 @@ export default function App() {
             <h4 style={{ marginBottom: "8px" }}>🎨 デザイン設定</h4>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px 20px" }}>
               {[
+                // ⭐️ UIに2つの設定を追加
                 { label: "🔠 1行目サイズ", key: "fontSizeLine1", unit: "px", type: "number" },
                 { label: "🔠 2行目サイズ", key: "fontSizeLine2", unit: "px", type: "number" },
                 { label: "📏 フレーム余白 (上/横)", key: "framePadding", unit: "px", type: "number" },
                 { label: "📏 下の余白", key: "framePaddingBottom", unit: "px", type: "number" },
+                { label: "📏 画像と文字の余白", key: "imageBottomMargin", unit: "px", type: "number" },
+                { label: "📏 テキストエリア高さ", key: "textContainerHeight", unit: "px", type: "number" },
                 { label: "🎯 フレーム丸み", key: "frameRadius", unit: "px", type: "number" },
                 { label: "🖼 写真の丸み", key: "imageRadius", unit: "px", type: "number" },
                 { label: "🖍 テキストカラー", key: "textColor", type: "color" },
