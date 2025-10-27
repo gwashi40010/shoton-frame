@@ -38,7 +38,7 @@ const LOGO_MAP = {
 };
 
 const BRAND_COLORS_MAP = {
-  sony: "#f36f21",
+  sony: "#00A1E9",
   canon: "#c00000",
   nikon: "#ffd400",
   fujifilm: "#006241",
