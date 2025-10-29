@@ -24,6 +24,7 @@ const LOGO_MAP = {
   xiaomi: "/logos/xiaomi.png",
   google: "/logos/google.png",
   huawei: "/logos/huawei.png",
+  Insta: "/logos/insta360.png",
   oppo: "/logos/oppo.png",
   vivo: "/logos/vivo.png",
   oneplus: "/logos/oneplus.png",
