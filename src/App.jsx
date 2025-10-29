@@ -1,7 +1,8 @@
-// App.jsx (単一ファイル統合版 - 行間調整)
+// App.jsx (単一ファイル統合版 - localStorageによる設定保存機能付き)
 
 import html2canvas from "html2canvas";
-import React, { useState, useMemo } from "react";
+// ⭐️ useEffect をインポート
+import React, { useState, useMemo, useEffect } from "react"; 
 import * as exifr from "exifr";
 
 // =========================================================
@@ -33,12 +34,10 @@ const LOGO_MAP = {
   kodak: "/logos/kodak.png",
   leica: "/logos/leica.png",
   sigma: "/logos/sigma.png",
-  IAC3: "/logos/insta360.png",
-
 };
 
 const BRAND_COLORS_MAP = {
-  sony: "#00A1E9",
+  sony: "#f36f21",
   canon: "#c00000",
   nikon: "#ffd400",
   fujifilm: "#006241",
@@ -108,7 +107,8 @@ const initialCameraInfo = {
   focalLength: "",
 };
 
-const initialSettings = {
+// ⭐️ デフォルト設定（localStorageに何もない場合にこれを使う）
+const defaultSettings = {
   showLogo: true,
   fontFamily: "Helvetica",
   fontSizeLine1: 18,
@@ -185,8 +185,34 @@ const styles = {
 export default function App() {
   const [imageSrc, setImageSrc] = useState(null);
   const [cameraInfo, setCameraInfo] = useState(initialCameraInfo);
-  const [settings, setSettings] = useState(initialSettings);
 
+  // ⭐️ 修正: 初期ステートをlocalStorageから読み込む
+  const [settings, setSettings] = useState(() => {
+    try {
+      const savedSettings = localStorage.getItem("shotonSettings");
+      if (savedSettings) {
+        // 保存された設定があれば、それをパース（JSON文字列をオブジェクトに戻す）して返す
+        // デフォルト設定とマージして、新しい設定項目が追加されても対応できるようにする
+        return { ...defaultSettings, ...JSON.parse(savedSettings) };
+      }
+    } catch (error) {
+      console.error("localStorageの読み込みに失敗:", error);
+    }
+    // 保存された設定がない、またはエラーの場合は、デフォルト設定を返す
+    return defaultSettings;
+  });
+
+  // ⭐️ 新規追加: settingsステートが変更されたら、自動でlocalStorageに保存する
+  useEffect(() => {
+    try {
+      // settingsオブジェクトをJSON文字列に変換して保存
+      localStorage.setItem("shotonSettings", JSON.stringify(settings));
+    } catch (error) {
+      console.error("localStorageへの保存に失敗:", error);
+    }
+  }, [settings]); // settings が変更されるたびにこの中身が実行される
+
+  
   const handleChangeCameraInfo = (e) => {
     setCameraInfo({ ...cameraInfo, [e.target.name]: e.target.value });
   };
@@ -336,7 +362,7 @@ export default function App() {
 
                 <p
                   style={{
-                    margin: "0px 0 0 0", // ⭐️ 修正: margin-topを2pxに変更
+                    margin: "2px 0 0 0",
                     fontSize: `${settings.fontSizeLine2}px`,
                     fontWeight: "400",
                   }}
