@@ -24,7 +24,7 @@ const LOGO_MAP = {
   xiaomi: "/logos/xiaomi.png",
   google: "/logos/google.png",
   huawei: "/logos/huawei.png",
-  insta: "/logos/insta360.png",
+  insta360: "/logos/insta360.png",
   arashi: "/logos/insta360.png",
   oppo: "/logos/oppo.png",
   vivo: "/logos/vivo.png",
@@ -227,6 +227,19 @@ export default function App() {
     const { lens, focalLength, aperture, exposure, iso } = cameraInfo;
     return [lens, focalLength, aperture, exposure, iso].filter(Boolean);
   }, [cameraInfo]);
+
+  // App.jsx (230行目あたり、return の直前)
+
+  // ... (cameraInfoFields の定義の下あたり)
+
+  // ▼▼▼ デバッグ用コードを追加 ▼▼▼
+  console.log("現在の cameraInfo.make:", cameraInfo.make);
+  console.log("getLogo関数の結果:", getLogo(cameraInfo.make));
+  // ▲▲▲ デバッグ用コードを追加 ▲▲▲
+  
+  // =========================================================
+  // 5. JSXレンダリング
+  // =========================================================
 
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
