@@ -1,4 +1,4 @@
-// App.jsx (単一ファイル統合版 - ロゴサイズ調整機能付き)
+// App.jsx (単一ファイル統合版 - ロゴレイアウト干渉対策版)
 
 import html2canvas from "html2canvas";
 import React, { useState, useMemo, useEffect } from "react"; 
@@ -117,7 +117,7 @@ const defaultSettings = {
   bottomBarHeight: 80,
   frameRadius: 8,
   imageRadius: 0,
-  logoScale: 1.8, // ⭐️ 新設定: ロゴの初期の大きさ倍率（文字サイズに対する倍率）
+  logoScale: 1.8, 
 };
 
 // =========================================================
@@ -307,26 +307,30 @@ export default function App() {
                 style={{
                   color: settings.textColor,
                   fontFamily: settings.fontFamily,
-                  lineHeight: "1.6",
                   height: `${settings.bottomBarHeight}px`,
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
+                  position: "relative", // 親要素を基準にする
                 }}
               >
+                {/* 1行目（文字とロゴを含むエリア） */}
                 <div
                   style={{
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    gap: "8px",
                     fontSize: `${settings.fontSizeLine1}px`,
                     fontWeight: "500",
                     whiteSpace: "nowrap",
+                    position: "relative",
+                    // ロゴの大きさに引っ張られないよう、高さを文字サイズと同じに固定
+                    height: `${settings.fontSizeLine1}px`, 
+                    marginBottom: "6px",
                   }}
                 >
-                  <p style={{ margin: 0 }} translate="no">
+                  <p style={{ margin: 0, paddingRight: settings.showLogo && cameraInfo.make && getLogo(cameraInfo.make) ? `${settings.fontSizeLine1 * (settings.logoScale || 1.8) + 8}px` : "0" }} translate="no">
                     Shot on&nbsp;
                     <strong style={{ color: getBrandColor(cameraInfo.make) }}>
                         {cameraInfo.model || "Model"}
@@ -338,20 +342,24 @@ export default function App() {
                       src={getLogo(cameraInfo.make)}
                       alt="brand logo"
                       style={{
-                        // ⭐️ 修正: logoScaleを使って高さを計算（例: 18px * 2.2 = 39.6px）
+                        // 他の文字に干渉しないように絶対配置（浮かせた状態）にする
+                        position: "absolute",
+                        right: "0",
+                        top: "50%",
+                        transform: "translateY(-50%)", // 縦方向の真ん中合わせ
                         height: `${settings.fontSizeLine1 * (settings.logoScale || 1.8)}px`, 
                         objectFit: "contain",
                         opacity: 0.9,
                         mixBlendMode: getBlendMode(settings.frameColor),
-                        transition: "all 0.3s ease",
                       }}
                     />
                   )}
                 </div>
 
+                {/* 2行目（レンズ情報） */}
                 <p
                   style={{
-                    margin: "2px 0 0 0",
+                    margin: 0,
                     fontSize: `${settings.fontSizeLine2}px`,
                     fontWeight: "400",
                   }}
@@ -402,7 +410,7 @@ export default function App() {
               {[
                 { label: "🔠 1行目サイズ", key: "fontSizeLine1", unit: "px", type: "number" },
                 { label: "🔠 2行目サイズ", key: "fontSizeLine2", unit: "px", type: "number" },
-                { label: "📐 ロゴ倍率", key: "logoScale", unit: "倍", type: "number", step: "0.1" }, // ⭐️ 新規追加
+                { label: "📐 ロゴ倍率", key: "logoScale", unit: "倍", type: "number", step: "0.1" }, 
                 { label: "📏 フレーム余白 (上/横)", key: "framePadding", unit: "px", type: "number" },
                 { label: "📏 下部バー高さ", key: "bottomBarHeight", unit: "px", type: "number" },
                 { label: "🎯 フレーム丸み", key: "frameRadius", unit: "px", type: "number" },
@@ -415,7 +423,7 @@ export default function App() {
                   <input
                     type={type}
                     value={settings[key]}
-                    step={step || "1"} // 小数点対応（倍率用）
+                    step={step || "1"} 
                     onChange={(e) => handleChangeSetting(key, type === "number" ? Number(e.target.value) : e.target.value)}
                     style={{ ...styles.numberInput, width: type === "color" ? "40px" : "70px" }}
                   />
