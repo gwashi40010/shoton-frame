@@ -1,4 +1,4 @@
-// App.jsx (単一ファイル統合版 - ロゴレイアウト干渉対策版)
+// App.jsx (単一ファイル統合版 - ロゴ見切れ対策＆小数点丸め版)
 
 import html2canvas from "html2canvas";
 import React, { useState, useMemo, useEffect } from "react"; 
@@ -88,7 +88,12 @@ const parseExifData = (exifData) => {
     : "";
   const aperture = exifData?.FNumber ? `f/${exifData.FNumber.toFixed(1)}` : "";
   const iso = exifData?.ISO ? `ISO${exifData.ISO}` : "";
-  const focalLength = exifData?.FocalLength ? `${exifData.FocalLength}mm` : "";
+  
+  // ⭐️ 修正: 焦点距離の長い小数点をスッキリ丸める（例: 7.4mm）
+  const focalLength = exifData?.FocalLength 
+    ? `${Number(exifData.FocalLength).toFixed(exifData.FocalLength % 1 === 0 ? 0 : 1)}mm` 
+    : "";
+    
   return { make, model, lens, exposure, aperture, iso, focalLength };
 };
 
@@ -312,10 +317,9 @@ export default function App() {
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  position: "relative", // 親要素を基準にする
                 }}
               >
-                {/* 1行目（文字とロゴを含むエリア） */}
+                {/* 1行目（文字とロゴが綺麗に並ぶエリア） */}
                 <div
                   style={{
                     display: "flex",
@@ -324,13 +328,12 @@ export default function App() {
                     fontSize: `${settings.fontSizeLine1}px`,
                     fontWeight: "500",
                     whiteSpace: "nowrap",
-                    position: "relative",
-                    // ロゴの大きさに引っ張られないよう、高さを文字サイズと同じに固定
-                    height: `${settings.fontSizeLine1}px`, 
-                    marginBottom: "6px",
+                    marginBottom: "8px",
+                    // ⭐️ 修正: 親要素の高さ制限を取り払い、ロゴの大きさに合わせて自動で広がるように
+                    gap: "12px", 
                   }}
                 >
-                  <p style={{ margin: 0, paddingRight: settings.showLogo && cameraInfo.make && getLogo(cameraInfo.make) ? `${settings.fontSizeLine1 * (settings.logoScale || 1.8) + 8}px` : "0" }} translate="no">
+                  <p style={{ margin: 0 }} translate="no">
                     Shot on&nbsp;
                     <strong style={{ color: getBrandColor(cameraInfo.make) }}>
                         {cameraInfo.model || "Model"}
@@ -342,15 +345,12 @@ export default function App() {
                       src={getLogo(cameraInfo.make)}
                       alt="brand logo"
                       style={{
-                        // 他の文字に干渉しないように絶対配置（浮かせた状態）にする
-                        position: "absolute",
-                        right: "0",
-                        top: "50%",
-                        transform: "translateY(-50%)", // 縦方向の真ん中合わせ
+                        // ⭐️ 修正: 見切れ（カット）を防ぐために absolute を廃止
                         height: `${settings.fontSizeLine1 * (settings.logoScale || 1.8)}px`, 
                         objectFit: "contain",
                         opacity: 0.9,
                         mixBlendMode: getBlendMode(settings.frameColor),
+                        display: "inline-block",
                       }}
                     />
                   )}
