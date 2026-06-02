@@ -1,4 +1,4 @@
-// App.jsx (単一ファイル統合版 - 周辺干渉ゼロ・ロゴ完全独立拡大版)
+// App.jsx (単一ファイル統合版 - ダウンロード時の右側切れ・はみ出し完全解消版)
 
 import html2canvas from "html2canvas";
 import React, { useState, useMemo, useEffect } from "react"; 
@@ -89,7 +89,6 @@ const parseExifData = (exifData) => {
   const aperture = exifData?.FNumber ? `f/${exifData.FNumber.toFixed(1)}` : "";
   const iso = exifData?.ISO ? `ISO${exifData.ISO}` : "";
   
-  // 焦点距離の長い小数点をスッキリ丸める（例: 8.8mm）
   const focalLength = exifData?.FocalLength 
     ? `${Number(exifData.FocalLength).toFixed(exifData.FocalLength % 1 === 0 ? 0 : 1)}mm` 
     : "";
@@ -119,7 +118,7 @@ const defaultSettings = {
   textColor: DEFAULT_TEXT_COLOR,
   frameColor: DEFAULT_FRAME_COLOR,
   framePadding: 40,
-  bottomBarHeight: 80, // 固定高さ指定に戻します
+  bottomBarHeight: 80, 
   frameRadius: 8,
   imageRadius: 0,
   logoScale: 1.8, 
@@ -248,22 +247,17 @@ export default function App() {
     const frameElement = document.getElementById("capture-area");
     if (!frameElement) return;
 
-    const originalMaxWidth = frameElement.style.maxWidth;
-    frameElement.style.maxWidth = "none";
-    
     await new Promise((r) => setTimeout(r, 100));
 
     const canvas = await html2canvas(frameElement, {
       useCORS: true,
       backgroundColor: settings.frameColor,
-      scale: 3,
+      scale: 3, 
       scrollX: 0,
       scrollY: 0,
       width: frameElement.offsetWidth,
       height: frameElement.offsetHeight,
     });
-    
-    frameElement.style.maxWidth = originalMaxWidth;
 
     const link = document.createElement("a");
     link.download = `shoton-frame.${format}`;
@@ -294,8 +288,11 @@ export default function App() {
                 borderRadius: `${settings.frameRadius}px`,
                 textAlign: "center",
                 maxWidth: "800px",
+                width: "100%", 
                 margin: "0 auto",
                 boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                boxSizing: "border-box", 
+                display: "inline-block", // ⭐️ 修正: html2canvasが幅を誤認しないよう、全体をインラインブロック化
               }}
             >
               <img
@@ -308,17 +305,19 @@ export default function App() {
                 }}
               />
 
-              {/* 下部バーの枠の大きさ設定（あなたの入力した通りに100%固定されるように戻しました） */}
               <div
                 style={{
                   color: settings.textColor,
                   fontFamily: settings.fontFamily,
-                  height: `${settings.bottomBarHeight}px`, // ⭐️ 完全固定高さ
+                  height: `${settings.bottomBarHeight}px`, 
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
                   boxSizing: "border-box",
+                  width: "100%", 
+                  // ⭐️ 修正: html2canvasでの右側切れを防ぐため、強制的なhiddenやpadding幅の制限を解除し、自然なFlexbox配置に最適化
+                  position: "relative",
                 }}
               >
                 {/* 1行目（横並びエリア） */}
@@ -331,17 +330,13 @@ export default function App() {
                     fontWeight: "500",
                     whiteSpace: "nowrap",
                     marginBottom: "6px",
-                    // ⭐️ 重要: ロゴがどれだけ大きくなっても、この行自体の高さを文字サイズにロックして周辺を押し広げさせない
                     height: `${settings.fontSizeLine1}px`, 
-                    position: "relative",
                   }}
                 >
-                  {/* ロゴのサイズに合わせて、文字の右側に「動的な余白」を確保して重なりを防止 */}
                   <div style={{ 
                     display: "flex", 
                     alignItems: "center", 
                     gap: "12px",
-                    paddingRight: settings.showLogo && cameraInfo.make && getLogo(cameraInfo.make) ? "0px" : "0px"
                   }}>
                     <p style={{ margin: 0 }} translate="no">
                       Shot on&nbsp;
@@ -354,14 +349,12 @@ export default function App() {
                       <div style={{ 
                         display: "inline-flex", 
                         alignItems: "center",
-                        // ⭐️ 魔法の1行: 行自体の高さ(13px等)を超えてロゴ画像だけをはみ出して拡大表示させる
                         height: "0px", 
                       }}>
                         <img
                           src={getLogo(cameraInfo.make)}
                           alt="brand logo"
                           style={{
-                            // ここで自由に拡大（周りへの干渉は完全にゼロ）
                             height: `${settings.fontSizeLine1 * (settings.logoScale || 1.8)}px`, 
                             objectFit: "contain",
                             opacity: 0.9,
@@ -374,16 +367,19 @@ export default function App() {
                 </div>
 
                 {/* 2行目（レンズ情報エリア） */}
-                <p
+                <div
                   style={{
                     margin: 0,
                     fontSize: `${settings.fontSizeLine2}px`,
                     fontWeight: "400",
                     whiteSpace: "nowrap",
+                    display: "flex",
+                    justifyContent: "center",
+                    width: "100%",
                   }}
                 >
                   {line2Parts.join(" · ")}
-                </p>
+                </div>
               </div>
             </div>
           </div>
@@ -430,7 +426,7 @@ export default function App() {
                 { label: "🔠 2行目サイズ", key: "fontSizeLine2", unit: "px", type: "number" },
                 { label: "📐 ロゴ倍率", key: "logoScale", unit: "倍", type: "number", step: "0.1" }, 
                 { label: "📏 フレーム余白 (上/横)", key: "framePadding", unit: "px", type: "number" },
-                { label: "📏 下部バー高さ", key: "bottomBarHeight", unit: "px", type: "number" }, // 固定高さ入力に戻りました
+                { label: "📏 下部バー高さ", key: "bottomBarHeight", unit: "px", type: "number" }, 
                 { label: "🎯 フレーム丸み", key: "frameRadius", unit: "px", type: "number" },
                 { label: "🖼 写真の丸み", key: "imageRadius", unit: "px", type: "number" },
                 { label: "🖍 テキストカラー", key: "textColor", type: "color" },
