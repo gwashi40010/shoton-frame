@@ -4,10 +4,6 @@ import html2canvas from "html2canvas";
 import React, { useState, useMemo, useEffect } from "react"; 
 import * as exifr from "exifr";
 
-// =========================================================
-// 1. 定数とヘルパー関数
-// =========================================================
-
 const LOGO_MAP = {
   sony: "/logos/sony.png",
   canon: "/logos/canon.png",
@@ -55,9 +51,7 @@ const getLogo = (make) => {
   if (!make) return null;
   const lower = make.toLowerCase();
   for (const key in LOGO_MAP) {
-    if (lower.includes(key)) {
-      return LOGO_MAP[key];
-    }
+    if (lower.includes(key)) return LOGO_MAP[key];
   }
   return null;
 };
@@ -65,11 +59,8 @@ const getLogo = (make) => {
 const getBrandColor = (make) => {
   if (!make) return DEFAULT_TEXT_COLOR;
   const brand = make.toLowerCase();
-
   for (const key in BRAND_COLORS_MAP) {
-    if (brand.includes(key)) {
-      return BRAND_COLORS_MAP[key];
-    }
+    if (brand.includes(key)) return BRAND_COLORS_MAP[key];
   }
   return DEFAULT_TEXT_COLOR;
 };
@@ -88,26 +79,14 @@ const parseExifData = (exifData) => {
     : "";
   const aperture = exifData?.FNumber ? `f/${exifData.FNumber.toFixed(1)}` : "";
   const iso = exifData?.ISO ? `ISO${exifData.ISO}` : "";
-  
-  const focalLength = exifData?.FocalLength 
-    ? `${Number(exifData.FocalLength).toFixed(exifData.FocalLength % 1 === 0 ? 0 : 1)}mm` 
+  const focalLength = exifData?.FocalLength
+    ? `${Number(exifData.FocalLength).toFixed(exifData.FocalLength % 1 === 0 ? 0 : 1)}mm`
     : "";
-    
   return { make, model, lens, exposure, aperture, iso, focalLength };
 };
 
-// =========================================================
-// 2. 初期ステート
-// =========================================================
-
 const initialCameraInfo = {
-  make: "",
-  model: "",
-  lens: "",
-  exposure: "",
-  aperture: "",
-  iso: "",
-  focalLength: "",
+  make: "", model: "", lens: "", exposure: "", aperture: "", iso: "", focalLength: "",
 };
 
 const defaultSettings = {
@@ -118,15 +97,11 @@ const defaultSettings = {
   textColor: DEFAULT_TEXT_COLOR,
   frameColor: DEFAULT_FRAME_COLOR,
   framePadding: 40,
-  bottomBarHeight: 80, 
+  bottomBarHeight: 80,
   frameRadius: 8,
   imageRadius: 0,
-  logoScale: 1.8, 
+  logoScale: 1.8,
 };
-
-// =========================================================
-// 3. スタイル定義
-// =========================================================
 
 const styles = {
   appContainer: {
@@ -181,10 +156,6 @@ const styles = {
   }),
 };
 
-// =========================================================
-// 4. メインコンポーネント
-// =========================================================
-
 export default function App() {
   const [imageSrc, setImageSrc] = useState(null);
   const [cameraInfo, setCameraInfo] = useState(initialCameraInfo);
@@ -192,9 +163,7 @@ export default function App() {
   const [settings, setSettings] = useState(() => {
     try {
       const savedSettings = localStorage.getItem("shotonSettings");
-      if (savedSettings) {
-        return { ...defaultSettings, ...JSON.parse(savedSettings) };
-      }
+      if (savedSettings) return { ...defaultSettings, ...JSON.parse(savedSettings) };
     } catch (error) {
       console.error("localStorageの読み込みに失敗:", error);
     }
@@ -216,7 +185,7 @@ export default function App() {
   const handleChangeSetting = (key, value) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
-  
+
   const line2Parts = useMemo(() => {
     const { lens, focalLength, aperture, exposure, iso } = cameraInfo;
     return [lens, focalLength, aperture, exposure, iso].filter(Boolean);
@@ -225,20 +194,15 @@ export default function App() {
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = (e) => setImageSrc(e.target.result);
     reader.readAsDataURL(file);
-
     try {
       const exifData = await exifr.parse(file);
-      const parsedInfo = parseExifData(exifData);
-      setCameraInfo(parsedInfo);
-      
+      setCameraInfo(parseExifData(exifData));
     } catch (error) {
       console.error("EXIFデータ取得エラー:", error);
       setCameraInfo(initialCameraInfo);
-      setSettings((prev) => ({ ...prev, textColor: DEFAULT_TEXT_COLOR }));
       alert("EXIFデータが見つからないか、読み取れませんでした。手動で情報を入力してください。");
     }
   };
@@ -246,31 +210,26 @@ export default function App() {
   const handleDownload = async (format = "png") => {
     const frameElement = document.getElementById("capture-area");
     if (!frameElement) return;
-
     await new Promise((r) => setTimeout(r, 150));
-
-    // ⭐️ 修正: お気に入りのレイアウトを1ミリも崩さず、保存時の右はみ出しバグだけを設定値で強制カット
     const canvas = await html2canvas(frameElement, {
       useCORS: true,
       backgroundColor: settings.frameColor,
-      scale: 3, 
+      scale: 3,
       scrollX: 0,
       scrollY: 0,
-      width: frameElement.offsetWidth,   // 写真の幅ぴったりのサイズで右側をクリップ
+      width: frameElement.offsetWidth,
       height: frameElement.offsetHeight,
     });
-
     const link = document.createElement("a");
     link.download = `shoton-frame.${format}`;
-    link.href =
-      format === "png"
-        ? canvas.toDataURL("image/png")
-        : canvas.toDataURL("image/jpeg", 0.95);
+    link.href = format === "png"
+      ? canvas.toDataURL("image/png")
+      : canvas.toDataURL("image/jpeg", 0.95);
     link.click();
   };
 
   const cameraInfoFields = ["make", "model", "lens", "aperture", "exposure", "iso", "focalLength"];
-  
+
   return (
     <div style={styles.appContainer}>
       <div style={styles.contentBox(settings.fontFamily)}>
@@ -288,8 +247,10 @@ export default function App() {
                 paddingRight: `${settings.framePadding}px`,
                 borderRadius: `${settings.frameRadius}px`,
                 boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                boxSizing: "border-box", 
-                display: "inline-block", 
+                boxSizing: "border-box",
+                display: "inline-flex",
+                flexDirection: "column",
+                alignItems: "center",
                 textAlign: "center",
               }}
             >
@@ -299,7 +260,8 @@ export default function App() {
                 style={{
                   display: "block",
                   borderRadius: `${settings.imageRadius}px`,
-                  maxHeight: "65vh", 
+                  maxHeight: "65vh",
+                  maxWidth: "100%",
                 }}
               />
 
@@ -307,16 +269,16 @@ export default function App() {
                 style={{
                   color: settings.textColor,
                   fontFamily: settings.fontFamily,
-                  height: `${settings.bottomBarHeight}px`, 
+                  height: `${settings.bottomBarHeight}px`,
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
                   boxSizing: "border-box",
-                  width: "100%", 
+                  width: "100%",
+                  minWidth: "max-content",
                 }}
               >
-                {/* 1行目（横並びエリア） */}
                 <div
                   style={{
                     display: "flex",
@@ -326,32 +288,23 @@ export default function App() {
                     fontWeight: "500",
                     whiteSpace: "nowrap",
                     marginBottom: "6px",
-                    height: `${settings.fontSizeLine1}px`, 
+                    height: `${settings.fontSizeLine1}px`,
                   }}
                 >
-                  <div style={{ 
-                    display: "flex", 
-                    alignItems: "center", 
-                    gap: "12px",
-                  }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                     <p style={{ margin: 0 }} translate="no">
                       Shot on&nbsp;
                       <strong style={{ color: getBrandColor(cameraInfo.make) }}>
-                          {cameraInfo.model || "Model"}
+                        {cameraInfo.model || "Model"}
                       </strong>
                     </p>
-                    
                     {settings.showLogo && cameraInfo.make && getLogo(cameraInfo.make) && (
-                      <div style={{ 
-                        display: "inline-flex", 
-                        alignItems: "center",
-                        height: "0px", 
-                      }}>
+                      <div style={{ display: "inline-flex", alignItems: "center", height: "0px" }}>
                         <img
                           src={getLogo(cameraInfo.make)}
                           alt="brand logo"
                           style={{
-                            height: `${settings.fontSizeLine1 * (settings.logoScale || 1.8)}px`, 
+                            height: `${settings.fontSizeLine1 * (settings.logoScale || 1.8)}px`,
                             objectFit: "contain",
                             opacity: 0.9,
                             mixBlendMode: getBlendMode(settings.frameColor),
@@ -362,7 +315,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 2行目（レンズ情報エリア） */}
                 <div
                   style={{
                     margin: 0,
@@ -420,9 +372,9 @@ export default function App() {
               {[
                 { label: "🔠 1行目サイズ", key: "fontSizeLine1", unit: "px", type: "number" },
                 { label: "🔠 2行目サイズ", key: "fontSizeLine2", unit: "px", type: "number" },
-                { label: "📐 ロゴ倍率", key: "logoScale", unit: "倍", type: "number", step: "0.1" }, 
+                { label: "📐 ロゴ倍率", key: "logoScale", unit: "倍", type: "number", step: "0.1" },
                 { label: "📏 フレーム余白 (上/横)", key: "framePadding", unit: "px", type: "number" },
-                { label: "📏 下部バー高さ", key: "bottomBarHeight", unit: "px", type: "number" }, 
+                { label: "📏 下部バー高さ", key: "bottomBarHeight", unit: "px", type: "number" },
                 { label: "🎯 フレーム丸み", key: "frameRadius", unit: "px", type: "number" },
                 { label: "🖼 写真の丸み", key: "imageRadius", unit: "px", type: "number" },
                 { label: "🖍 テキストカラー", key: "textColor", type: "color" },
@@ -433,7 +385,7 @@ export default function App() {
                   <input
                     type={type}
                     value={settings[key]}
-                    step={step || "1"} 
+                    step={step || "1"}
                     onChange={(e) => handleChangeSetting(key, type === "number" ? Number(e.target.value) : e.target.value)}
                     style={{ ...styles.numberInput, width: type === "color" ? "40px" : "70px" }}
                   />
