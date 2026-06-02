@@ -1,7 +1,5 @@
-// App.jsx (安定レイアウト・ダウンロード右切れ完全解消版)
-
 import html2canvas from "html2canvas";
-import React, { useState, useMemo, useEffect } from "react"; 
+import React, { useState, useMemo, useEffect } from "react";
 import * as exifr from "exifr";
 
 const LOGO_MAP = {
@@ -213,20 +211,14 @@ export default function App() {
 
     await new Promise((r) => setTimeout(r, 150));
 
-    const rect = frameElement.getBoundingClientRect();
-
     const canvas = await html2canvas(frameElement, {
       useCORS: true,
       backgroundColor: settings.frameColor,
       scale: 3,
-      scrollX: -window.scrollX,
-      scrollY: -window.scrollY,
-      windowWidth: document.documentElement.scrollWidth,
-      windowHeight: document.documentElement.scrollHeight,
-      x: 0,
-      y: 0,
-      width: rect.width,
-      height: rect.height,
+      scrollX: 0,
+      scrollY: 0,
+      width: frameElement.scrollWidth,
+      height: frameElement.scrollHeight,
     });
 
     const link = document.createElement("a");
@@ -256,11 +248,12 @@ export default function App() {
                 paddingRight: `${settings.framePadding}px`,
                 borderRadius: `${settings.frameRadius}px`,
                 boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                boxSizing: "border-box",
+                boxSizing: "content-box",
                 display: "inline-flex",
                 flexDirection: "column",
                 alignItems: "center",
                 textAlign: "center",
+                overflow: "visible",
               }}
             >
               <img
