@@ -65,8 +65,8 @@ const defaultSettings = {
 };
 
 const styles = {
-  appContainer: { background: "#eaeaea", minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "flex-start", padding: "60px 0", overflowY: "auto" },
-  contentBox: (fontFamily) => ({ background: "#fff", padding: "40px 20px", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", color: "#000", fontFamily, textAlign: "center", maxWidth: "900px", width: "95%", boxSizing: "border-box" }),
+  appContainer: { background: "#eaeaea", minHeight: "100vh", display: "block", padding: "60px 0" },
+  contentBox: (fontFamily) => ({ background: "#fff", padding: "40px 20px", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", color: "#000", fontFamily, textAlign: "center", maxWidth: "900px", width: "95%", boxSizing: "border-box", margin: "0 auto" }),
   input: { width: "100%", padding: "6px 10px", borderRadius: "4px", border: "1px solid #ccc", boxSizing: "border-box" },
   label: { display: "block", fontWeight: "bold", marginBottom: "4px", fontSize: "13px", color: "#333" },
   numberInput: { marginLeft: "8px", padding: "4px 8px", width: "70px", borderRadius: "4px", border: "1px solid #ccc" },
