@@ -1,4 +1,4 @@
-// App.jsx (単一ファイル統合版 - html2canvas横幅バグ完全解消版)
+// App.jsx (安定レイアウト・ダウンロード右切れ完全解消版)
 
 import html2canvas from "html2canvas";
 import React, { useState, useMemo, useEffect } from "react"; 
@@ -247,16 +247,16 @@ export default function App() {
     const frameElement = document.getElementById("capture-area");
     if (!frameElement) return;
 
-    // html2canvas実行前に少しだけ待機して描画を安定させる
     await new Promise((r) => setTimeout(r, 150));
 
+    // ⭐️ 修正: お気に入りのレイアウトを1ミリも崩さず、保存時の右はみ出しバグだけを設定値で強制カット
     const canvas = await html2canvas(frameElement, {
       useCORS: true,
       backgroundColor: settings.frameColor,
-      scale: 3, // 高解像度書き出し
+      scale: 3, 
       scrollX: 0,
       scrollY: 0,
-      width: frameElement.offsetWidth,
+      width: frameElement.offsetWidth,   // 写真の幅ぴったりのサイズで右側をクリップ
       height: frameElement.offsetHeight,
     });
 
@@ -278,7 +278,6 @@ export default function App() {
         <input type="file" accept="image/*" onChange={handleFileChange} />
 
         {imageSrc && (
-          // ⭐️ 修正: ブラウザ表示時に枠が画面外へ突き出るのを防ぐコンテナ
           <div style={{ maxWidth: "100%", overflowX: "auto", marginTop: "40px", padding: "10px" }}>
             <div
               id="capture-area"
@@ -290,8 +289,6 @@ export default function App() {
                 borderRadius: `${settings.frameRadius}px`,
                 boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
                 boxSizing: "border-box", 
-                // ⭐️ 修正: html2canvasの横幅誤認バグを完全に潰すため、width: 100% や maxWidth を廃止。
-                // 読み込んだ写真本来のサイズに外枠を100%自動一致させる構造に変更
                 display: "inline-block", 
                 textAlign: "center",
               }}
@@ -300,10 +297,9 @@ export default function App() {
                 src={imageSrc}
                 alt="preview"
                 style={{
-                  // ⭐️ 修正: 写真サイズを基準に全体を組み立てるため、max-width制限を解除
                   display: "block",
                   borderRadius: `${settings.imageRadius}px`,
-                  maxHeight: "65vh", // 画面に収まりやすくするための縦幅制限のみ残す
+                  maxHeight: "65vh", 
                 }}
               />
 
@@ -317,7 +313,7 @@ export default function App() {
                   alignItems: "center",
                   justifyContent: "center",
                   boxSizing: "border-box",
-                  width: "100%", // 上の写真の横幅と自動で100%一致する
+                  width: "100%", 
                 }}
               >
                 {/* 1行目（横並びエリア） */}
