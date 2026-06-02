@@ -1,4 +1,4 @@
-// App.jsx (単一ファイル統合版 - ロゴ見切れ対策＆小数点丸め＆焦点距離整理版)
+// App.jsx (単一ファイル統合版 - レイアウトはみ出し完全対策版)
 
 import html2canvas from "html2canvas";
 import React, { useState, useMemo, useEffect } from "react"; 
@@ -119,7 +119,7 @@ const defaultSettings = {
   textColor: DEFAULT_TEXT_COLOR,
   frameColor: DEFAULT_FRAME_COLOR,
   framePadding: 40,
-  bottomBarHeight: 80,
+  bottomBarHeight: 100, // 初期値を少し広めに
   frameRadius: 8,
   imageRadius: 0,
   logoScale: 1.8, 
@@ -308,29 +308,44 @@ export default function App() {
                 }}
               />
 
+              {/* ⭐️ 修正: minHeightに変更し、padding上下を設けることで、中身（ロゴ）が大きくなっても枠全体が自動で追従して広がるように改善 */}
               <div
                 style={{
                   color: settings.textColor,
                   fontFamily: settings.fontFamily,
-                  height: `${settings.bottomBarHeight}px`,
+                  minHeight: `${settings.bottomBarHeight}px`,
+                  paddingTop: "20px",
+                  paddingBottom: "20px",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
+                  boxSizing: "border-box",
                 }}
               >
-                {/* 1行目（文字とロゴが綺麗に並ぶエリア） */}
+                {/* ⭐️ 修正: ロゴを完全に独立した「最上段」に配置（これで見切れ・重なりは100%発生しません） */}
+                {settings.showLogo && cameraInfo.make && getLogo(cameraInfo.make) && (
+                  <div style={{ marginBottom: "12px", display: "flex", justifyContent: "center", alignItems: "center" }}>
+                    <img
+                      src={getLogo(cameraInfo.make)}
+                      alt="brand logo"
+                      style={{
+                        height: `${settings.fontSizeLine1 * (settings.logoScale || 1.8)}px`, 
+                        objectFit: "contain",
+                        opacity: 0.9,
+                        mixBlendMode: getBlendMode(settings.frameColor),
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* 1行目（文字エリア） */}
                 <div
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
                     fontSize: `${settings.fontSizeLine1}px`,
                     fontWeight: "500",
                     whiteSpace: "nowrap",
-                    marginBottom: "8px",
-                    // ⭐️ 修正: 親要素の高さ制限を取り払い、ロゴの大きさに合わせて自動で広がるように
-                    gap: "12px", 
+                    marginBottom: "6px",
                   }}
                 >
                   <p style={{ margin: 0 }} translate="no">
@@ -339,29 +354,15 @@ export default function App() {
                         {cameraInfo.model || "Model"}
                     </strong>
                   </p>
-                  
-                  {settings.showLogo && cameraInfo.make && getLogo(cameraInfo.make) && (
-                    <img
-                      src={getLogo(cameraInfo.make)}
-                      alt="brand logo"
-                      style={{
-                        // ⭐️ 修正: 見切れ（カット）を防ぐために absolute を廃止
-                        height: `${settings.fontSizeLine1 * (settings.logoScale || 1.8)}px`, 
-                        objectFit: "contain",
-                        opacity: 0.9,
-                        mixBlendMode: getBlendMode(settings.frameColor),
-                        display: "inline-block",
-                      }}
-                    />
-                  )}
                 </div>
 
-                {/* 2行目（レンズ情報、⭐️ 修正: 1行目のロゴの下にあった二重表示を削除） */}
+                {/* 2行目（レンズ情報エリア） */}
                 <p
                   style={{
                     margin: 0,
                     fontSize: `${settings.fontSizeLine2}px`,
                     fontWeight: "400",
+                    whiteSpace: "nowrap",
                   }}
                 >
                   {line2Parts.join(" · ")}
@@ -412,7 +413,7 @@ export default function App() {
                 { label: "🔠 2行目サイズ", key: "fontSizeLine2", unit: "px", type: "number" },
                 { label: "📐 ロゴ倍率", key: "logoScale", unit: "倍", type: "number", step: "0.1" }, 
                 { label: "📏 フレーム余白 (上/横)", key: "framePadding", unit: "px", type: "number" },
-                { label: "📏 下部バー高さ", key: "bottomBarHeight", unit: "px", type: "number" },
+                { label: "📏 下部バー最小高さ", key: "bottomBarHeight", unit: "px", type: "number" },
                 { label: "🎯 フレーム丸み", key: "frameRadius", unit: "px", type: "number" },
                 { label: "🖼 写真の丸み", key: "imageRadius", unit: "px", type: "number" },
                 { label: "🖍 テキストカラー", key: "textColor", type: "color" },
