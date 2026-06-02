@@ -210,16 +210,25 @@ export default function App() {
   const handleDownload = async (format = "png") => {
     const frameElement = document.getElementById("capture-area");
     if (!frameElement) return;
+
     await new Promise((r) => setTimeout(r, 150));
+
+    const rect = frameElement.getBoundingClientRect();
+
     const canvas = await html2canvas(frameElement, {
       useCORS: true,
       backgroundColor: settings.frameColor,
       scale: 3,
-      scrollX: 0,
-      scrollY: 0,
-      width: frameElement.offsetWidth,
-      height: frameElement.offsetHeight,
+      scrollX: -window.scrollX,
+      scrollY: -window.scrollY,
+      windowWidth: document.documentElement.scrollWidth,
+      windowHeight: document.documentElement.scrollHeight,
+      x: 0,
+      y: 0,
+      width: rect.width,
+      height: rect.height,
     });
+
     const link = document.createElement("a");
     link.download = `shoton-frame.${format}`;
     link.href = format === "png"
