@@ -1,4 +1,4 @@
-// App.jsx (単一ファイル統合版 - html2canvas書き出しオプション完全最適化版)
+// App.jsx (単一ファイル統合版 - html2canvasロゴ背景バグ強制消去版)
 
 import html2canvas from "html2canvas";
 import React, { useState, useMemo, useEffect } from "react"; 
@@ -138,14 +138,15 @@ export default function App() {
     const frameElement = document.getElementById("capture-area");
     if (!frameElement) return;
 
-    // ⭐️ 修正: html2canvasの横幅バグ（右突き抜け）を設定値で強制的にねじ伏せる
+    await new Promise((r) => setTimeout(r, 150));
+
     const canvas = await html2canvas(frameElement, {
       useCORS: true,
       backgroundColor: settings.frameColor,
       scale: 3,
-      windowWidth: frameElement.scrollWidth,  // 画面幅ではなく要素の「本物の幅」でリサイズ
+      windowWidth: frameElement.scrollWidth,  
       windowHeight: frameElement.scrollHeight,
-      width: frameElement.offsetWidth,        // 右側の余分な空白を一切カットして保存
+      width: frameElement.offsetWidth,        
       height: frameElement.offsetHeight,
       x: 0,
       y: 0
@@ -164,7 +165,7 @@ export default function App() {
         <input type="file" accept="image/*" onChange={handleFileChange} />
 
         {imageSrc && (
-          <div style={{ display: "flex", justifyContent: "center", marginTop: "40px", maxWidth: "100%", overflowX: "auto" }}>
+          <div style={{ display: "flex", justifyContent: "center", marginTop: "40px", maxWidth: "100%", overflowX: "auto", padding: "10px" }}>
             <div
               id="capture-area"
               style={{
@@ -184,7 +185,19 @@ export default function App() {
                     <p style={{ margin: 0 }} translate="no">Shot on&nbsp;<strong style={{ color: getBrandColor(cameraInfo.make) }}>{cameraInfo.model || "Model"}</strong></p>
                     {settings.showLogo && cameraInfo.make && getLogo(cameraInfo.make) && (
                       <div style={{ display: "inline-flex", alignItems: "center", height: "0px" }}>
-                        <img src={getLogo(cameraInfo.make)} alt="logo" style={{ height: `${settings.fontSizeLine1 * settings.logoScale}px`, objectFit: "contain", mixBlendMode: getBlendMode(settings.frameColor) }} />
+                        <img 
+                          src={getLogo(cameraInfo.make)} 
+                          alt="logo" 
+                          style={{ 
+                            height: `${settings.fontSizeLine1 * settings.logoScale}px`, 
+                            objectFit: "contain", 
+                            mixBlendMode: getBlendMode(settings.frameColor),
+                            // ⭐️ 修正: ロゴの背景（外枠）に強制的に「透明」、あるいは「フレームカラーと同じ色」を指定。
+                            // これにより、html2canvasがダウンロード時に勝手に背景を白塗りするバグを物理的に封じ込めます。
+                            backgroundColor: "transparent",
+                            background: "transparent"
+                          }} 
+                        />
                       </div>
                     )}
                   </div>
