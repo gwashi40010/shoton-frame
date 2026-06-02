@@ -1,4 +1,4 @@
-// App.jsx (単一ファイル統合版 - レイアウトはみ出し完全対策版)
+// App.jsx (単一ファイル統合版 - 横配置キープ・可変フレーム版)
 
 import html2canvas from "html2canvas";
 import React, { useState, useMemo, useEffect } from "react"; 
@@ -19,7 +19,7 @@ const LOGO_MAP = {
   apple: "/logos/apple.png",
   iphone: "/logos/apple.png",
   samsung: "/logos/samsung.png",
-  galaxy: "/logos/galaxy.png",
+  galaxy: "/logos/samsung.png",
   xiaomi: "/logos/xiaomi.png",
   google: "/logos/google.png",
   huawei: "/logos/huawei.png",
@@ -89,7 +89,7 @@ const parseExifData = (exifData) => {
   const aperture = exifData?.FNumber ? `f/${exifData.FNumber.toFixed(1)}` : "";
   const iso = exifData?.ISO ? `ISO${exifData.ISO}` : "";
   
-  // 焦点距離の長い小数点をスッキリ丸める（例: 7.4mm）
+  // 焦点距離の長い小数点をスッキリ丸める（例: 8.8mm）
   const focalLength = exifData?.FocalLength 
     ? `${Number(exifData.FocalLength).toFixed(exifData.FocalLength % 1 === 0 ? 0 : 1)}mm` 
     : "";
@@ -119,7 +119,7 @@ const defaultSettings = {
   textColor: DEFAULT_TEXT_COLOR,
   frameColor: DEFAULT_FRAME_COLOR,
   framePadding: 40,
-  bottomBarHeight: 100, // 初期値を少し広めに
+  bottomBarHeight: 80,
   frameRadius: 8,
   imageRadius: 0,
   logoScale: 1.8, 
@@ -308,14 +308,14 @@ export default function App() {
                 }}
               />
 
-              {/* ⭐️ 修正: minHeightに変更し、padding上下を設けることで、中身（ロゴ）が大きくなっても枠全体が自動で追従して広がるように改善 */}
+              {/* ⭐️ 改善: 固定高さをやめ、上下パディング＋最小高さ(minHeight)にすることで、ロゴが大きくなってもフレーム自体が追従して縦に広がるように修正 */}
               <div
                 style={{
                   color: settings.textColor,
                   fontFamily: settings.fontFamily,
                   minHeight: `${settings.bottomBarHeight}px`,
-                  paddingTop: "20px",
-                  paddingBottom: "20px",
+                  paddingTop: "25px",
+                  paddingBottom: "25px",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
@@ -323,29 +323,17 @@ export default function App() {
                   boxSizing: "border-box",
                 }}
               >
-                {/* ⭐️ 修正: ロゴを完全に独立した「最上段」に配置（これで見切れ・重なりは100%発生しません） */}
-                {settings.showLogo && cameraInfo.make && getLogo(cameraInfo.make) && (
-                  <div style={{ marginBottom: "12px", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                    <img
-                      src={getLogo(cameraInfo.make)}
-                      alt="brand logo"
-                      style={{
-                        height: `${settings.fontSizeLine1 * (settings.logoScale || 1.8)}px`, 
-                        objectFit: "contain",
-                        opacity: 0.9,
-                        mixBlendMode: getBlendMode(settings.frameColor),
-                      }}
-                    />
-                  </div>
-                )}
-
-                {/* 1行目（文字エリア） */}
+                {/* 1行目（文字とロゴが「横に綺麗に並ぶ」エリアをキープ） */}
                 <div
                   style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                     fontSize: `${settings.fontSizeLine1}px`,
                     fontWeight: "500",
                     whiteSpace: "nowrap",
-                    marginBottom: "6px",
+                    marginBottom: "10px",
+                    gap: "14px", // 文字とロゴの間のちょうどいい隙間
                   }}
                 >
                   <p style={{ margin: 0 }} translate="no">
@@ -354,6 +342,21 @@ export default function App() {
                         {cameraInfo.model || "Model"}
                     </strong>
                   </p>
+                  
+                  {settings.showLogo && cameraInfo.make && getLogo(cameraInfo.make) && (
+                    <img
+                      src={getLogo(cameraInfo.make)}
+                      alt="brand logo"
+                      style={{
+                        // 1行目のサイズ設定×スライダー倍率で、綺麗に横並びのまま拡大縮小
+                        height: `${settings.fontSizeLine1 * (settings.logoScale || 1.8)}px`, 
+                        objectFit: "contain",
+                        opacity: 0.9,
+                        mixBlendMode: getBlendMode(settings.frameColor),
+                        display: "inline-block",
+                      }}
+                    />
+                  )}
                 </div>
 
                 {/* 2行目（レンズ情報エリア） */}
