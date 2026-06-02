@@ -1,4 +1,4 @@
-// App.jsx (単一ファイル統合版 - 横配置キープ・可変フレーム版)
+// App.jsx (単一ファイル統合版 - 周辺干渉ゼロ・ロゴ完全独立拡大版)
 
 import html2canvas from "html2canvas";
 import React, { useState, useMemo, useEffect } from "react"; 
@@ -119,7 +119,7 @@ const defaultSettings = {
   textColor: DEFAULT_TEXT_COLOR,
   frameColor: DEFAULT_FRAME_COLOR,
   framePadding: 40,
-  bottomBarHeight: 80,
+  bottomBarHeight: 80, // 固定高さ指定に戻します
   frameRadius: 8,
   imageRadius: 0,
   logoScale: 1.8, 
@@ -308,14 +308,12 @@ export default function App() {
                 }}
               />
 
-              {/* ⭐️ 改善: 固定高さをやめ、上下パディング＋最小高さ(minHeight)にすることで、ロゴが大きくなってもフレーム自体が追従して縦に広がるように修正 */}
+              {/* 下部バーの枠の大きさ設定（あなたの入力した通りに100%固定されるように戻しました） */}
               <div
                 style={{
                   color: settings.textColor,
                   fontFamily: settings.fontFamily,
-                  minHeight: `${settings.bottomBarHeight}px`,
-                  paddingTop: "25px",
-                  paddingBottom: "25px",
+                  height: `${settings.bottomBarHeight}px`, // ⭐️ 完全固定高さ
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
@@ -323,7 +321,7 @@ export default function App() {
                   boxSizing: "border-box",
                 }}
               >
-                {/* 1行目（文字とロゴが「横に綺麗に並ぶ」エリアをキープ） */}
+                {/* 1行目（横並びエリア） */}
                 <div
                   style={{
                     display: "flex",
@@ -332,31 +330,47 @@ export default function App() {
                     fontSize: `${settings.fontSizeLine1}px`,
                     fontWeight: "500",
                     whiteSpace: "nowrap",
-                    marginBottom: "10px",
-                    gap: "14px", // 文字とロゴの間のちょうどいい隙間
+                    marginBottom: "6px",
+                    // ⭐️ 重要: ロゴがどれだけ大きくなっても、この行自体の高さを文字サイズにロックして周辺を押し広げさせない
+                    height: `${settings.fontSizeLine1}px`, 
+                    position: "relative",
                   }}
                 >
-                  <p style={{ margin: 0 }} translate="no">
-                    Shot on&nbsp;
-                    <strong style={{ color: getBrandColor(cameraInfo.make) }}>
-                        {cameraInfo.model || "Model"}
-                    </strong>
-                  </p>
-                  
-                  {settings.showLogo && cameraInfo.make && getLogo(cameraInfo.make) && (
-                    <img
-                      src={getLogo(cameraInfo.make)}
-                      alt="brand logo"
-                      style={{
-                        // 1行目のサイズ設定×スライダー倍率で、綺麗に横並びのまま拡大縮小
-                        height: `${settings.fontSizeLine1 * (settings.logoScale || 1.8)}px`, 
-                        objectFit: "contain",
-                        opacity: 0.9,
-                        mixBlendMode: getBlendMode(settings.frameColor),
-                        display: "inline-block",
-                      }}
-                    />
-                  )}
+                  {/* ロゴのサイズに合わせて、文字の右側に「動的な余白」を確保して重なりを防止 */}
+                  <div style={{ 
+                    display: "flex", 
+                    alignItems: "center", 
+                    gap: "12px",
+                    paddingRight: settings.showLogo && cameraInfo.make && getLogo(cameraInfo.make) ? "0px" : "0px"
+                  }}>
+                    <p style={{ margin: 0 }} translate="no">
+                      Shot on&nbsp;
+                      <strong style={{ color: getBrandColor(cameraInfo.make) }}>
+                          {cameraInfo.model || "Model"}
+                      </strong>
+                    </p>
+                    
+                    {settings.showLogo && cameraInfo.make && getLogo(cameraInfo.make) && (
+                      <div style={{ 
+                        display: "inline-flex", 
+                        alignItems: "center",
+                        // ⭐️ 魔法の1行: 行自体の高さ(13px等)を超えてロゴ画像だけをはみ出して拡大表示させる
+                        height: "0px", 
+                      }}>
+                        <img
+                          src={getLogo(cameraInfo.make)}
+                          alt="brand logo"
+                          style={{
+                            // ここで自由に拡大（周りへの干渉は完全にゼロ）
+                            height: `${settings.fontSizeLine1 * (settings.logoScale || 1.8)}px`, 
+                            objectFit: "contain",
+                            opacity: 0.9,
+                            mixBlendMode: getBlendMode(settings.frameColor),
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* 2行目（レンズ情報エリア） */}
@@ -416,7 +430,7 @@ export default function App() {
                 { label: "🔠 2行目サイズ", key: "fontSizeLine2", unit: "px", type: "number" },
                 { label: "📐 ロゴ倍率", key: "logoScale", unit: "倍", type: "number", step: "0.1" }, 
                 { label: "📏 フレーム余白 (上/横)", key: "framePadding", unit: "px", type: "number" },
-                { label: "📏 下部バー最小高さ", key: "bottomBarHeight", unit: "px", type: "number" },
+                { label: "📏 下部バー高さ", key: "bottomBarHeight", unit: "px", type: "number" }, // 固定高さ入力に戻りました
                 { label: "🎯 フレーム丸み", key: "frameRadius", unit: "px", type: "number" },
                 { label: "🖼 写真の丸み", key: "imageRadius", unit: "px", type: "number" },
                 { label: "🖍 テキストカラー", key: "textColor", type: "color" },
