@@ -78,6 +78,7 @@ export default function App() {
   const [imageNaturalSize, setImageNaturalSize] = useState({ w: 0, h: 0 });
   const [cameraInfo, setCameraInfo] = useState(initialCameraInfo);
   const imgRef = useRef(null);
+  const frameRef = useRef(null);
 
   const [settings, setSettings] = useState(() => {
     try {
@@ -90,6 +91,12 @@ export default function App() {
   useEffect(() => {
     try { localStorage.setItem("shotonSettings", JSON.stringify(settings)); } catch (e) {}
   }, [settings]);
+
+  useEffect(() => {
+    if (imageSrc && frameRef.current) {
+      frameRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [imageSrc]);
 
   const handleChangeCameraInfo = (e) => setCameraInfo({ ...cameraInfo, [e.target.name]: e.target.value });
   const handleChangeSetting = (key, value) => setSettings((prev) => ({ ...prev, [key]: value }));
@@ -226,7 +233,7 @@ export default function App() {
         <input type="file" accept="image/*" onChange={handleFileChange} />
 
         {imageSrc && (
-          <div style={{ maxWidth: "100%", overflowX: "auto", marginTop: "40px", padding: "10px" }}>
+          <div ref={frameRef} style={{ maxWidth: "100%", marginTop: "40px", padding: "10px", textAlign: "center" }}>
             <div
               style={{
                 background: settings.frameColor,
