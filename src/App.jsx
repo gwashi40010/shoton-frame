@@ -1,4 +1,4 @@
-// App.jsx (単一ファイル統合版 - html2canvasロゴ背景バグ強制消去版)
+// App.jsx (基本機能安定・はみ出しガード完全リセット版)
 
 import html2canvas from "html2canvas";
 import React, { useState, useMemo, useEffect } from "react"; 
@@ -81,31 +81,24 @@ const parseExifData = (exifData) => {
   return { make, model, lens, exposure, aperture, iso, focalLength };
 };
 
-const initialCameraInfo = { make: "", model: "", lens: "", exposure: "", aperture: "", iso: "", focalLength: "" };
-
-const defaultSettings = {
-  showLogo: true,
-  fontFamily: "Helvetica",
-  fontSizeLine1: 18,
-  fontSizeLine2: 14,
-  textColor: DEFAULT_TEXT_COLOR,
-  frameColor: DEFAULT_FRAME_COLOR,
-  framePadding: 40,
-  bottomBarHeight: 80, 
-  frameRadius: 8,
-  imageRadius: 0,
-  logoScale: 1.8, 
+const styles = {
+  appContainer: { background: "#eaeaea", minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center", padding: "60px 0", overflowY: "auto" },
+  contentBox: (fontFamily) => ({ background: "#fff", padding: "40px 20px", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", color: "#000", fontFamily, textAlign: "center", maxWidth: "900px", width: "95%", boxSizing: "border-box" }),
+  input: { width: "100%", padding: "6px 10px", borderRadius: "4px", border: "1px solid #ccc", boxSizing: "border-box" },
+  label: { display: "block", fontWeight: "bold", marginBottom: "4px", fontSize: "13px", color: "#333" },
+  numberInput: { marginLeft: "8px", padding: "4px 8px", width: "70px", borderRadius: "4px", border: "1px solid #ccc" },
+  button: (color) => ({ padding: "10px 20px", background: color, color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" }),
 };
 
 export default function App() {
   const [imageSrc, setImageSrc] = useState(null);
-  const [cameraInfo, setCameraInfo] = useState(initialCameraInfo);
+  const [cameraInfo, setCameraInfo] = useState({ make: "", model: "", lens: "", exposure: "", aperture: "", iso: "", focalLength: "" });
   const [settings, setSettings] = useState(() => {
     try {
       const saved = localStorage.getItem("shotonSettings");
       if (saved) return { ...defaultSettings, ...JSON.parse(saved) };
     } catch (e) {}
-    return defaultSettings;
+    return { showLogo: true, fontFamily: "Helvetica", fontSizeLine1: 18, fontSizeLine2: 14, textColor: DEFAULT_TEXT_COLOR, frameColor: DEFAULT_FRAME_COLOR, framePadding: 40, bottomBarHeight: 90, frameRadius: 8, imageRadius: 0, logoScale: 1.8 };
   });
 
   useEffect(() => {
@@ -130,7 +123,7 @@ export default function App() {
       const exifData = await exifr.parse(file);
       setCameraInfo(parseExifData(exifData));
     } catch (error) {
-      setCameraInfo(initialCameraInfo);
+      setCameraInfo({ make: "", model: "", lens: "", exposure: "", aperture: "", iso: "", focalLength: "" });
     }
   };
 
@@ -138,19 +131,21 @@ export default function App() {
     const frameElement = document.getElementById("capture-area");
     if (!frameElement) return;
 
-    await new Promise((r) => setTimeout(r, 150));
+    const originalMaxWidth = frameElement.style.maxWidth;
+    frameElement.style.maxWidth = "none";
+    await new Promise((r) => setTimeout(r, 100));
 
     const canvas = await html2canvas(frameElement, {
       useCORS: true,
       backgroundColor: settings.frameColor,
       scale: 3,
-      windowWidth: frameElement.scrollWidth,  
-      windowHeight: frameElement.scrollHeight,
-      width: frameElement.offsetWidth,        
+      scrollX: 0,
+      scrollY: 0,
+      width: frameElement.offsetWidth,
       height: frameElement.offsetHeight,
-      x: 0,
-      y: 0
     });
+    
+    frameElement.style.maxWidth = originalMaxWidth;
 
     const link = document.createElement("a");
     link.download = `shoton-frame.${format}`;
@@ -159,89 +154,122 @@ export default function App() {
   };
 
   return (
-    <div style={{ background: "#eaeaea", minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center", padding: "60px 0" }}>
-      <div style={{ background: "#fff", padding: "40px 20px", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", fontFamily: settings.fontFamily, textAlign: "center", maxWidth: "900px", width: "95%", boxSizing: "border-box" }}>
-        <h2>📸 Shoton Frame Customizer</h2>
+    <div style={styles.appContainer}>
+      <div style={styles.contentBox(settings.fontFamily)}>
+        <h2 style={{ marginBottom: "20px" }}>📸 Shoton Frame Customizer</h2>
         <input type="file" accept="image/*" onChange={handleFileChange} />
 
         {imageSrc && (
-          <div style={{ display: "flex", justifyContent: "center", marginTop: "40px", maxWidth: "100%", overflowX: "auto", padding: "10px" }}>
+          <div style={{ display: "flex", justifyContent: "center", marginTop: "40px" }}>
             <div
               id="capture-area"
               style={{
                 background: settings.frameColor,
-                padding: `${settings.framePadding}px`,
-                paddingBottom: "0px",
+                paddingTop: `${settings.framePadding}px`,
+                paddingLeft: `${settings.framePadding}px`,
+                paddingRight: `${settings.framePadding}px`,
                 borderRadius: `${settings.frameRadius}px`,
-                boxSizing: "border-box",
-                display: "inline-block",
-                textAlign: "center"
+                textAlign: "center",
+                maxWidth: "800px",
+                margin: "0 auto",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
               }}
             >
-              <img src={imageSrc} alt="preview" style={{ display: "block", borderRadius: `${settings.imageRadius}px`, maxHeight: "65vh" }} />
-              <div style={{ color: settings.textColor, height: `${settings.bottomBarHeight}px`, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", boxSizing: "border-box", width: "100%" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", fontSize: `${settings.fontSizeLine1}px`, fontWeight: "500", whiteSpace: "nowrap", marginBottom: "6px", height: `${settings.fontSizeLine1}px` }}>
+              <img src={imageSrc} alt="preview" style={{ width: "100%", borderRadius: `${settings.imageRadius}px`, display: "block" }} />
+
+              <div
+                style={{
+                  color: settings.textColor,
+                  fontFamily: settings.fontFamily,
+                  height: `${settings.bottomBarHeight}px`,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  // ⭐️ 修正：ライブラリがダウンロード時にロゴの白枠を突き出そうとしても、
+                  // 左右に少し内側の余白を設けることで、外側の白フレーム内に確実に閉じ込める設定
+                  paddingLeft: "40px",
+                  paddingRight: "40px",
+                  boxSizing: "border-box"
+                }}
+              >
+                {/* 1行目 */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", fontSize: `${settings.fontSizeLine1}px`, fontWeight: "500", whiteSpace: "nowrap", marginBottom: "6px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                    <p style={{ margin: 0 }} translate="no">Shot on&nbsp;<strong style={{ color: getBrandColor(cameraInfo.make) }}>{cameraInfo.model || "Model"}</strong></p>
+                    <p style={{ margin: 0 }} translate="no">
+                      Shot on&nbsp;
+                      <strong style={{ color: getBrandColor(cameraInfo.make) }}>
+                        {cameraInfo.model || "Model"}
+                      </strong>
+                    </p>
+                    
                     {settings.showLogo && cameraInfo.make && getLogo(cameraInfo.make) && (
-                      <div style={{ display: "inline-flex", alignItems: "center", height: "0px" }}>
-                        <img 
-                          src={getLogo(cameraInfo.make)} 
-                          alt="logo" 
-                          style={{ 
-                            height: `${settings.fontSizeLine1 * settings.logoScale}px`, 
-                            objectFit: "contain", 
-                            mixBlendMode: getBlendMode(settings.frameColor),
-                            // ⭐️ 修正: ロゴの背景（外枠）に強制的に「透明」、あるいは「フレームカラーと同じ色」を指定。
-                            // これにより、html2canvasがダウンロード時に勝手に背景を白塗りするバグを物理的に封じ込めます。
-                            backgroundColor: "transparent",
-                            background: "transparent"
-                          }} 
-                        />
-                      </div>
+                      <img
+                        src={getLogo(cameraInfo.make)}
+                        alt="brand logo"
+                        style={{
+                          height: `${settings.fontSizeLine1 * (settings.logoScale || 1.8)}px`, 
+                          objectFit: "contain",
+                          opacity: 0.9,
+                          mixBlendMode: getBlendMode(settings.frameColor),
+                          display: "inline-block"
+                        }}
+                      />
                     )}
                   </div>
                 </div>
-                <div style={{ margin: 0, fontSize: `${settings.fontSizeLine2}px`, fontWeight: "400", whiteSpace: "nowrap" }}>{line2Parts.join(" · ")}</div>
+
+                {/* 2行目 */}
+                <p style={{ margin: 0, fontSize: `${settings.fontSizeLine2}px`, fontWeight: "400" }}>
+                  {line2Parts.join(" · ")}
+                </p>
               </div>
             </div>
           </div>
         )}
 
         <div style={{ marginTop: "30px", textAlign: "left" }}>
+          <h4 style={{ marginBottom: "10px" }}>📝 撮影情報を編集</h4>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px 20px" }}>
             {["make", "model", "lens", "aperture", "exposure", "iso", "focalLength"].map((key) => (
               <div key={key}>
-                <label style={{ display: "block", fontWeight: "bold", marginBottom: "4px", fontSize: "13px" }}>{key.toUpperCase()}</label>
-                <input type="text" name={key} value={cameraInfo[key]} onChange={handleChangeCameraInfo} style={{ width: "100%", padding: "6px 10px", borderRadius: "4px", border: "1px solid #ccc", boxSizing: "border-box" }} />
+                <label htmlFor={key} style={styles.label}>{key.toUpperCase()}</label>
+                <input id={key} type="text" name={key} value={cameraInfo[key]} onChange={handleChangeCameraInfo} placeholder={`Enter ${key}`} style={styles.input} />
               </div>
             ))}
           </div>
         </div>
 
         <div style={{ marginTop: "25px", textAlign: "left" }}>
-          <label>🧩 ロゴ表示<input type="checkbox" checked={settings.showLogo} onChange={(e) => handleChangeSetting("showLogo", e.target.checked)} style={{ marginLeft: "8px" }} /></label>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px 20px", marginTop: "15px" }}>
+          <label style={{ display: "block", marginBottom: "15px" }}>
+            🧩 ロゴ表示
+            <input type="checkbox" checked={settings.showLogo} onChange={(e) => handleChangeSetting("showLogo", e.target.checked)} style={{ marginLeft: "8px" }} />
+          </label>
+
+          <h4 style={{ marginBottom: "8px" }}>🎨 デザイン設定</h4>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px 20px" }}>
             {[
               { label: "🔠 1行目サイズ", key: "fontSizeLine1", unit: "px", type: "number" },
               { label: "🔠 2行目サイズ", key: "fontSizeLine2", unit: "px", type: "number" },
-              { label: "📐 ロゴ倍率", key: "logoScale", unit: "倍", type: "number", step: "0.1" },
-              { label: "📏 フレーム余白", key: "framePadding", unit: "px", type: "number" },
+              { label: "📐 ロゴ倍率", key: "logoScale", unit: "倍", type: "number", step: "0.1" }, 
+              { label: "📏 フレーム余白 (上/横)", key: "framePadding", unit: "px", type: "number" },
               { label: "📏 下部バー高さ", key: "bottomBarHeight", unit: "px", type: "number" },
               { label: "🎯 フレーム丸み", key: "frameRadius", unit: "px", type: "number" },
               { label: "🖼 写真の丸み", key: "imageRadius", unit: "px", type: "number" },
               { label: "🖍 テキストカラー", key: "textColor", type: "color" },
               { label: "⬜ フレームカラー", key: "frameColor", type: "color" },
             ].map(({ label, key, unit, type, step }) => (
-              <label key={key}>{label}
-                <input type={type} value={settings[key]} step={step || "1"} onChange={(e) => handleChangeSetting(key, type === "number" ? Number(e.target.value) : e.target.value)} style={{ marginLeft: "8px", padding: "4px 8px", width: type === "color" ? "40px" : "70px", borderRadius: "4px", border: "1px solid #ccc" }} />
+              <label key={key}>
+                {label}
+                <input type={type} value={settings[key]} step={step || "1"} onChange={(e) => handleChangeSetting(key, type === "number" ? Number(e.target.value) : e.target.value)} style={{ ...styles.numberInput, width: type === "color" ? "40px" : "70px" }} />
                 {unit}
               </label>
             ))}
           </div>
+
           <div style={{ marginTop: "30px", display: "flex", gap: "15px", justifyContent: "center" }}>
-            <button onClick={() => handleDownload("png")} style={{ padding: "10px 20px", background: "#007bff", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer" }}>📥 PNGで保存</button>
-            <button onClick={() => handleDownload("jpeg")} style={{ padding: "10px 20px", background: "#28a745", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer" }}>📷 JPGで保存</button>
+            <button onClick={() => handleDownload("png")} style={styles.button("#007bff")}>📥 PNGで保存</button>
+            <button onClick={() => handleDownload("jpeg")} style={styles.button("#28a745")}>📷 JPGで保存</button>
           </div>
         </div>
       </div>
