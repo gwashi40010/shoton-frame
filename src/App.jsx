@@ -1,4 +1,4 @@
-// App.jsx (単一ファイル統合版 - ダウンロード時の右側切れ・はみ出し完全解消版)
+// App.jsx (単一ファイル統合版 - html2canvas横幅バグ完全解消版)
 
 import html2canvas from "html2canvas";
 import React, { useState, useMemo, useEffect } from "react"; 
@@ -247,12 +247,13 @@ export default function App() {
     const frameElement = document.getElementById("capture-area");
     if (!frameElement) return;
 
-    await new Promise((r) => setTimeout(r, 100));
+    // html2canvas実行前に少しだけ待機して描画を安定させる
+    await new Promise((r) => setTimeout(r, 150));
 
     const canvas = await html2canvas(frameElement, {
       useCORS: true,
       backgroundColor: settings.frameColor,
-      scale: 3, 
+      scale: 3, // 高解像度書き出し
       scrollX: 0,
       scrollY: 0,
       width: frameElement.offsetWidth,
@@ -277,7 +278,8 @@ export default function App() {
         <input type="file" accept="image/*" onChange={handleFileChange} />
 
         {imageSrc && (
-          <div style={{ display: "flex", justifyContent: "center", marginTop: "40px" }}>
+          // ⭐️ 修正: ブラウザ表示時に枠が画面外へ突き出るのを防ぐコンテナ
+          <div style={{ maxWidth: "100%", overflowX: "auto", marginTop: "40px", padding: "10px" }}>
             <div
               id="capture-area"
               style={{
@@ -286,22 +288,22 @@ export default function App() {
                 paddingLeft: `${settings.framePadding}px`,
                 paddingRight: `${settings.framePadding}px`,
                 borderRadius: `${settings.frameRadius}px`,
-                textAlign: "center",
-                maxWidth: "800px",
-                width: "100%", 
-                margin: "0 auto",
                 boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
                 boxSizing: "border-box", 
-                display: "inline-block", // ⭐️ 修正: 全体をインラインブロック化して余計な横広がりを防止
+                // ⭐️ 修正: html2canvasの横幅誤認バグを完全に潰すため、width: 100% や maxWidth を廃止。
+                // 読み込んだ写真本来のサイズに外枠を100%自動一致させる構造に変更
+                display: "inline-block", 
+                textAlign: "center",
               }}
             >
               <img
                 src={imageSrc}
                 alt="preview"
                 style={{
-                  width: "100%",
-                  borderRadius: `${settings.imageRadius}px`,
+                  // ⭐️ 修正: 写真サイズを基準に全体を組み立てるため、max-width制限を解除
                   display: "block",
+                  borderRadius: `${settings.imageRadius}px`,
+                  maxHeight: "65vh", // 画面に収まりやすくするための縦幅制限のみ残す
                 }}
               />
 
@@ -315,8 +317,7 @@ export default function App() {
                   alignItems: "center",
                   justifyContent: "center",
                   boxSizing: "border-box",
-                  width: "100%", 
-                  position: "relative",
+                  width: "100%", // 上の写真の横幅と自動で100%一致する
                 }}
               >
                 {/* 1行目（横並びエリア） */}
