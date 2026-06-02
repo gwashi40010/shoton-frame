@@ -1,4 +1,4 @@
-// App.jsx (単一ファイル統合版 - ロゴ見切れ対策＆小数点丸め版)
+// App.jsx (単一ファイル統合版 - ロゴ見切れ対策＆小数点丸め＆焦点距離整理版)
 
 import html2canvas from "html2canvas";
 import React, { useState, useMemo, useEffect } from "react"; 
@@ -89,7 +89,7 @@ const parseExifData = (exifData) => {
   const aperture = exifData?.FNumber ? `f/${exifData.FNumber.toFixed(1)}` : "";
   const iso = exifData?.ISO ? `ISO${exifData.ISO}` : "";
   
-  // ⭐️ 修正: 焦点距離の長い小数点をスッキリ丸める（例: 7.4mm）
+  // 焦点距離の長い小数点をスッキリ丸める（例: 7.4mm）
   const focalLength = exifData?.FocalLength 
     ? `${Number(exifData.FocalLength).toFixed(exifData.FocalLength % 1 === 0 ? 0 : 1)}mm` 
     : "";
@@ -356,7 +356,7 @@ export default function App() {
                   )}
                 </div>
 
-                {/* 2行目（レンズ情報） */}
+                {/* 2行目（レンズ情報、⭐️ 修正: 1行目のロゴの下にあった二重表示を削除） */}
                 <p
                   style={{
                     margin: 0,
