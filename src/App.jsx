@@ -292,7 +292,7 @@ export default function App() {
                 margin: "0 auto",
                 boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
                 boxSizing: "border-box", 
-                display: "inline-block", // ⭐️ 修正: html2canvasが幅を誤認しないよう、全体をインラインブロック化
+                display: "inline-block", // ⭐️ 修正: 全体をインラインブロック化して余計な横広がりを防止
               }}
             >
               <img
@@ -316,7 +316,6 @@ export default function App() {
                   justifyContent: "center",
                   boxSizing: "border-box",
                   width: "100%", 
-                  // ⭐️ 修正: html2canvasでの右側切れを防ぐため、強制的なhiddenやpadding幅の制限を解除し、自然なFlexbox配置に最適化
                   position: "relative",
                 }}
               >
